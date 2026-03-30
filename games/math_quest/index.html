@@ -1,0 +1,933 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Math Quest - Adventure Game</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+@keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+@keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+@keyframes slideIn { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes pop { 0% { transform: scale(0); } 70% { transform: scale(1.2); } 100% { transform: scale(1); } }
+@keyframes shake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-8px); } 75% { transform: translateX(8px); } }
+@keyframes confetti-fall { 0% { transform: translateY(-100px) rotate(0deg); opacity: 1; } 100% { transform: translateY(100vh) rotate(720deg); opacity: 0; } }
+@keyframes starCollect { 0% { transform: scale(1); opacity: 1; } 100% { transform: scale(2) translateY(-30px); opacity: 0; } }
+@keyframes rainbow { 0% { color: #e74c3c; } 20% { color: #f39c12; } 40% { color: #27ae60; } 60% { color: #3498db; } 80% { color: #8e44ad; } 100% { color: #e74c3c; } }
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+}
+
+.container {
+  width: 90%;
+  max-width: 700px;
+  min-height: 500px;
+  background: white;
+  border-radius: 24px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  padding: 30px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* ===== WELCOME SCREEN ===== */
+#welcome-screen { text-align: center; animation: slideIn 0.6s ease; }
+#welcome-screen h1 { font-size: 2.8em; margin-bottom: 10px; animation: rainbow 3s linear infinite; }
+#welcome-screen .subtitle { font-size: 1.1em; color: #7f8c8d; margin-bottom: 30px; }
+#welcome-screen .mascot { font-size: 5em; animation: float 2s ease-in-out infinite; display: block; margin: 20px 0; }
+.name-input { padding: 14px 20px; font-size: 1.1em; border: 3px solid #ddd; border-radius: 50px; width: 70%; outline: none; text-align: center; transition: border-color 0.3s; }
+.name-input:focus { border-color: #667eea; }
+.start-btn { display: inline-block; margin-top: 20px; padding: 16px 50px; font-size: 1.2em; background: linear-gradient(135deg, #667eea, #764ba2); color: white; border: none; border-radius: 50px; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; font-weight: bold; }
+.start-btn:hover { transform: scale(1.05); box-shadow: 0 8px 25px rgba(102,126,234,0.4); }
+
+/* ===== PROGRESS BAR ===== */
+.progress-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; padding: 10px 15px; background: #f8f9fa; border-radius: 15px; }
+.progress-info { font-size: 0.9em; color: #555; font-weight: 600; }
+.stars-display { font-size: 1.1em; color: #f39c12; }
+.progress-track { flex: 1; height: 10px; background: #e0e0e0; border-radius: 10px; margin: 0 15px; overflow: hidden; }
+.progress-fill { height: 100%; background: linear-gradient(90deg, #27ae60, #2ecc71); border-radius: 10px; transition: width 0.5s ease; }
+
+/* ===== QUESTION SCREEN ===== */
+#question-screen { display: none; animation: slideIn 0.5s ease; }
+.session-badge { display: inline-block; padding: 6px 16px; border-radius: 20px; color: white; font-size: 0.85em; font-weight: bold; margin-bottom: 10px; }
+.difficulty-badge { display: inline-block; padding: 4px 12px; border-radius: 15px; font-size: 0.8em; font-weight: 600; margin-left: 8px; }
+.question-num { font-size: 1.4em; font-weight: bold; color: #2c3e50; margin: 10px 0 5px; }
+.question-text { font-size: 1.15em; color: #34495e; line-height: 1.6; margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 12px; border-left: 4px solid #667eea; }
+.answer-section { display: flex; flex-direction: column; gap: 10px; }
+.answer-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.answer-label { font-size: 0.95em; color: #555; font-weight: 600; min-width: 100px; }
+.answer-input { padding: 12px 16px; font-size: 1.1em; border: 3px solid #ddd; border-radius: 12px; outline: none; width: 120px; text-align: center; transition: border-color 0.3s; }
+.answer-input:focus { border-color: #667eea; }
+.answer-input.correct { border-color: #27ae60; background: #eafaf1; }
+.answer-input.wrong { border-color: #e74c3c; background: #fdedec; animation: shake 0.4s ease; }
+.submit-btn { padding: 14px 40px; font-size: 1.1em; background: linear-gradient(135deg, #27ae60, #2ecc71); color: white; border: none; border-radius: 50px; cursor: pointer; font-weight: bold; transition: transform 0.2s; margin-top: 10px; align-self: center; }
+.submit-btn:hover { transform: scale(1.05); }
+.hint-btn { padding: 10px 25px; font-size: 0.95em; background: #f39c12; color: white; border: none; border-radius: 50px; cursor: pointer; font-weight: 600; margin-top: 5px; align-self: center; }
+.hint-text { color: #e67e22; font-style: italic; margin-top: 8px; padding: 10px; background: #fef9e7; border-radius: 8px; display: none; text-align: center; }
+.feedback { font-size: 1.2em; text-align: center; margin-top: 15px; font-weight: bold; min-height: 30px; }
+.feedback.correct-feedback { color: #27ae60; animation: pop 0.4s ease; }
+.feedback.wrong-feedback { color: #e74c3c; }
+
+/* ===== REWARD SCREEN ===== */
+#reward-screen { display: none; text-align: center; animation: slideIn 0.5s ease; }
+#reward-screen h2 { font-size: 1.8em; color: #27ae60; margin-bottom: 5px; }
+#reward-screen .reward-subtitle { color: #7f8c8d; margin-bottom: 20px; }
+.game-container { width: 100%; min-height: 300px; position: relative; margin: 10px 0; border-radius: 16px; overflow: hidden; }
+.play-btn, .next-btn { padding: 14px 40px; font-size: 1.1em; color: white; border: none; border-radius: 50px; cursor: pointer; font-weight: bold; transition: transform 0.2s; margin: 5px; }
+.play-btn { background: linear-gradient(135deg, #e74c3c, #c0392b); }
+.next-btn { background: linear-gradient(135deg, #667eea, #764ba2); }
+.play-btn:hover, .next-btn:hover { transform: scale(1.05); }
+
+/* ===== MINI GAME COMMON ===== */
+.mini-game { display: none; }
+.mini-game.active { display: block; }
+.game-score { font-size: 1.1em; font-weight: bold; color: #2c3e50; margin: 8px 0; }
+
+/* ===== MEMORY GAME ===== */
+.memory-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; max-width: 360px; margin: 10px auto; }
+.memory-card { width: 100%; aspect-ratio: 1; background: linear-gradient(135deg, #667eea, #764ba2); border-radius: 12px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 2em; color: white; transition: transform 0.3s; user-select: none; }
+.memory-card.flipped { background: white; border: 3px solid #667eea; transform: rotateY(180deg); }
+.memory-card.matched { background: #eafaf1; border: 3px solid #27ae60; cursor: default; }
+
+/* ===== CATCH STARS ===== */
+#catch-area { width: 100%; height: 300px; background: linear-gradient(180deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%); border-radius: 16px; position: relative; overflow: hidden; cursor: crosshair; }
+.star { position: absolute; font-size: 1.8em; cursor: pointer; animation: float 1.5s ease-in-out infinite; transition: transform 0.1s; user-select: none; }
+.star:hover { transform: scale(1.3); }
+
+/* ===== BUBBLE POP ===== */
+#bubble-area { width: 100%; height: 300px; background: linear-gradient(180deg, #dff9fb 0%, #c7ecee 100%); border-radius: 16px; position: relative; overflow: hidden; cursor: pointer; }
+.bubble { position: absolute; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.2em; transition: transform 0.1s; user-select: none; opacity: 0.85; }
+.bubble:hover { transform: scale(1.15); opacity: 1; }
+
+/* ===== SNAKE ===== */
+#snake-canvas { border-radius: 12px; display: block; margin: 0 auto; background: #1a1a2e; }
+.snake-controls { display: flex; gap: 5px; justify-content: center; margin-top: 10px; }
+.snake-controls button { width: 50px; height: 50px; font-size: 1.3em; border: none; border-radius: 12px; background: #667eea; color: white; cursor: pointer; }
+
+/* ===== TIC TAC TOE ===== */
+.ttt-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; max-width: 240px; margin: 10px auto; }
+.ttt-cell { width: 100%; aspect-ratio: 1; background: #f0f0f0; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 2.2em; cursor: pointer; font-weight: bold; transition: background 0.2s; user-select: none; }
+.ttt-cell:hover { background: #e0e0e0; }
+.ttt-cell.x { color: #e74c3c; }
+.ttt-cell.o { color: #3498db; }
+.ttt-status { font-size: 1.1em; font-weight: bold; margin: 8px 0; color: #2c3e50; min-height: 30px; }
+
+/* ===== COMPLETION SCREEN ===== */
+#complete-screen { display: none; text-align: center; animation: slideIn 0.6s ease; }
+#complete-screen h1 { font-size: 2.5em; color: #f39c12; margin-bottom: 10px; }
+#complete-screen .trophy { font-size: 5em; display: block; margin: 20px 0; animation: float 2s ease-in-out infinite; }
+
+/* ===== CONFETTI ===== */
+.confetti-piece { position: fixed; width: 10px; height: 10px; top: -20px; z-index: 9999; border-radius: 2px; animation: confetti-fall linear forwards; pointer-events: none; }
+
+/* ===== SESSION COMPLETE ===== */
+#session-complete { display: none; text-align: center; animation: slideIn 0.5s ease; }
+#session-complete h2 { font-size: 2em; color: #f39c12; margin-bottom: 10px; }
+#session-complete .session-stars { font-size: 3em; margin: 15px 0; }
+</style>
+</head>
+<body>
+
+<div class="container" id="app">
+
+  <!-- WELCOME -->
+  <div id="welcome-screen">
+    <span class="mascot">🧙‍♀️</span>
+    <h1>Math Quest</h1>
+    <p class="subtitle">Solve math puzzles and unlock fun games!</p>
+    <input type="text" class="name-input" id="player-name" placeholder="Enter your name..." maxlength="20">
+    <br>
+    <div style="margin-top:20px;">
+      <p style="color:#7f8c8d;font-size:0.95em;margin-bottom:10px;">Choose where to start:</p>
+      <div id="session-picker" style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-bottom:15px;">
+        <button class="session-pick-btn" onclick="pickSession(0)" style="padding:10px 18px;border:3px solid #667eea;background:white;color:#667eea;border-radius:50px;cursor:pointer;font-weight:bold;font-size:0.95em;transition:all 0.2s;">Session 1 🌱</button>
+        <button class="session-pick-btn" onclick="pickSession(1)" style="padding:10px 18px;border:3px solid #e67e22;background:white;color:#e67e22;border-radius:50px;cursor:pointer;font-weight:bold;font-size:0.95em;transition:all 0.2s;">Session 2 💪</button>
+        <button class="session-pick-btn" onclick="pickSession(2)" style="padding:10px 18px;border:3px solid #27ae60;background:white;color:#27ae60;border-radius:50px;cursor:pointer;font-weight:bold;font-size:0.95em;transition:all 0.2s;">Session 3 🚀</button>
+        <button class="session-pick-btn" onclick="pickSession(3)" style="padding:10px 18px;border:3px solid #e74c3c;background:white;color:#e74c3c;border-radius:50px;cursor:pointer;font-weight:bold;font-size:0.95em;transition:all 0.2s;">Session 4 🔥</button>
+        <button class="session-pick-btn" onclick="pickSession(4)" style="padding:10px 18px;border:3px solid #8e44ad;background:white;color:#8e44ad;border-radius:50px;cursor:pointer;font-weight:bold;font-size:0.95em;transition:all 0.2s;">Session 5 🏆</button>
+      </div>
+    </div>
+    <button class="start-btn" onclick="startGame()">Start Adventure! 🚀</button>
+  </div>
+
+  <!-- QUESTION -->
+  <div id="question-screen">
+    <div class="progress-bar">
+      <span class="progress-info" id="progress-info">Session 1 / 5</span>
+      <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+      <span class="stars-display" id="stars-display">⭐ 0</span>
+    </div>
+    <span class="session-badge" id="session-badge">Session 1</span>
+    <span class="difficulty-badge" id="difficulty-badge">Easy ★</span>
+    <div class="question-num" id="question-num">Question 1</div>
+    <div class="question-text" id="question-text"></div>
+    <div class="answer-section" id="answer-section"></div>
+    <div class="hint-text" id="hint-text"></div>
+    <div class="feedback" id="feedback"></div>
+  </div>
+
+  <!-- REWARD -->
+  <div id="reward-screen">
+    <h2 id="reward-title">⭐ Correct! Amazing! ⭐</h2>
+    <p class="reward-subtitle">You earned a bonus game! Pick one to play:</p>
+    <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin-bottom:15px;">
+      <button class="play-btn" onclick="launchMiniGame(0)" style="background:linear-gradient(135deg,#9b59b6,#8e44ad);font-size:0.95em;padding:10px 20px;">🧠 Memory</button>
+      <button class="play-btn" onclick="launchMiniGame(1)" style="background:linear-gradient(135deg,#f39c12,#e67e22);font-size:0.95em;padding:10px 20px;">⭐ Catch Stars</button>
+      <button class="play-btn" onclick="launchMiniGame(2)" style="background:linear-gradient(135deg,#3498db,#2980b9);font-size:0.95em;padding:10px 20px;">🫧 Bubbles</button>
+      <button class="play-btn" onclick="launchMiniGame(3)" style="background:linear-gradient(135deg,#27ae60,#229954);font-size:0.95em;padding:10px 20px;">🐍 Snake</button>
+      <button class="play-btn" onclick="launchMiniGame(4)" style="background:linear-gradient(135deg,#e74c3c,#c0392b);font-size:0.95em;padding:10px 20px;">❌⭕ Tic-Tac-Toe</button>
+    </div>
+    <div class="game-container" id="game-container">
+      <!-- Memory -->
+      <div class="mini-game" id="memory-game">
+        <div class="game-score" id="memory-score">Pairs found: 0 / 6</div>
+        <div class="memory-grid" id="memory-grid"></div>
+      </div>
+      <!-- Catch Stars -->
+      <div class="mini-game" id="catch-game">
+        <div class="game-score" id="catch-score">Stars caught: 0 | Time: 15s</div>
+        <div id="catch-area"></div>
+      </div>
+      <!-- Bubble Pop -->
+      <div class="mini-game" id="bubble-game">
+        <div class="game-score" id="bubble-score">Bubbles popped: 0 | Time: 15s</div>
+        <div id="bubble-area"></div>
+      </div>
+      <!-- Snake -->
+      <div class="mini-game" id="snake-game">
+        <div class="game-score" id="snake-score">Score: 0</div>
+        <canvas id="snake-canvas" width="320" height="320"></canvas>
+        <div class="snake-controls">
+          <button onclick="setSnakeDir(0,-1)">⬆️</button>
+          <button onclick="setSnakeDir(-1,0)">⬅️</button>
+          <button onclick="setSnakeDir(1,0)">➡️</button>
+          <button onclick="setSnakeDir(0,1)">⬇️</button>
+        </div>
+      </div>
+      <!-- Tic Tac Toe -->
+      <div class="mini-game" id="ttt-game">
+        <div class="ttt-status" id="ttt-status">Your turn! You are X</div>
+        <div class="ttt-grid" id="ttt-grid"></div>
+        <button class="play-btn" onclick="initTTT()" style="margin-top:10px;font-size:0.9em;padding:8px 20px;">New Game</button>
+      </div>
+    </div>
+    <button class="next-btn" onclick="nextQuestion()" id="next-btn">Next Question ➡️</button>
+  </div>
+
+  <!-- SESSION COMPLETE -->
+  <div id="session-complete">
+    <h2>🎉 Session Complete! 🎉</h2>
+    <p style="font-size:1.1em;color:#555;" id="session-complete-text"></p>
+    <div class="session-stars" id="session-stars-display"></div>
+    <div id="session-summary-stats" style="font-size:1em;color:#555;margin:10px 0;"></div>
+    <div id="share-buttons" style="display:flex;gap:10px;justify-content:center;margin:18px 0;flex-wrap:wrap;">
+      <button onclick="shareWhatsApp()" style="padding:12px 24px;font-size:1em;background:#25D366;color:white;border:none;border-radius:50px;cursor:pointer;font-weight:bold;transition:transform 0.2s;display:flex;align-items:center;gap:6px;">
+        <span style="font-size:1.2em;">📱</span> Send to Dad (WhatsApp)
+      </button>
+      <button onclick="shareSMS()" style="padding:12px 24px;font-size:1em;background:#3498db;color:white;border:none;border-radius:50px;cursor:pointer;font-weight:bold;transition:transform 0.2s;display:flex;align-items:center;gap:6px;">
+        <span style="font-size:1.2em;">💬</span> Send to Dad (SMS)
+      </button>
+    </div>
+    <button class="start-btn" onclick="startNextSession()" id="next-session-btn">Next Session ➡️</button>
+  </div>
+
+  <!-- GAME COMPLETE -->
+  <div id="complete-screen">
+    <span class="trophy">🏆</span>
+    <h1>You're a Math Champion!</h1>
+    <p style="font-size:1.2em;color:#555;margin:10px 0;" id="final-stats"></p>
+    <button class="start-btn" onclick="location.reload()">Play Again 🔄</button>
+  </div>
+
+</div>
+
+<script>
+// ==================== QUESTION DATA ====================
+const sessions = [
+  {
+    title: "Session 1: Getting Started",
+    color: "#667eea",
+    questions: [
+      { q: "Dana has 3 times as many stickers as Ron. Together they have 20 stickers. How many stickers does each one have?", fields: [{label:"Ron",answer:5},{label:"Dana",answer:15}], difficulty:"Easy", hint:"If Ron has some amount, Dana has 3 times that. So together that's 4 parts = 20." },
+      { q: "Yael has 6 more candies than Omer. Together they have 18 candies. How many does each one have?", fields: [{label:"Omer",answer:6},{label:"Yael",answer:12}], difficulty:"Easy", hint:"If Omer has some amount, Yael has that + 6. Together = 18." },
+      { q: "A pen costs twice as much as a pencil. Together they cost 15 shekels. How much does each one cost?", fields: [{label:"Pencil",answer:5},{label:"Pen",answer:10}], difficulty:"Medium", hint:"Pencil = 1 part, Pen = 2 parts. Together = 3 parts = 15." },
+      { q: "Tom collected 4 times as many shells as Noa. Tom has 12 more shells than Noa. How many shells does each one have?", fields: [{label:"Noa",answer:4},{label:"Tom",answer:16}], difficulty:"Medium", hint:"Tom has 4× Noa, and also Noa+12. So 4×Noa = Noa+12. The extra 3 parts = 12." },
+      { q: "Maya is 8 years older than her brother. In 3 years, Maya will be twice his age. How old is each one now?", fields: [{label:"Brother",answer:5},{label:"Maya",answer:13}], difficulty:"Medium-Hard", hint:"In 3 years: brother is B+3, Maya is B+11. Maya = 2 × brother. So B+11 = 2(B+3)." },
+      { q: "A box has red and blue balls. There are twice as many red balls as blue ones. If you take out 4 red balls, there will be the same number of each color. How many of each color were there at the start?", fields: [{label:"Blue",answer:4},{label:"Red",answer:8}], difficulty:"Medium-Hard", hint:"Red = 2×Blue. If you remove 4 red: Red-4 = Blue. So 2×Blue - 4 = Blue." },
+      { q: "Three friends have 38 marbles together. Gal has twice as many as Noa. Shir has 6 more than Noa. How many does each one have?", fields: [{label:"Noa",answer:8},{label:"Gal",answer:16},{label:"Shir",answer:14}], difficulty:"Hard", hint:"Noa=x, Gal=2x, Shir=x+6. Total: x+2x+x+6 = 38, so 4x = 32." },
+      { q: "A father is 4 times as old as his son. In 8 years, the father will be only 2 and a half times as old. How old are they now?", fields: [{label:"Son",answer:8},{label:"Father",answer:32}], difficulty:"Hard", hint:"Father=4×Son. In 8 years: 4S+8 = 2.5×(S+8). Solve for S." },
+      { q: "Two numbers add up to 50. If you multiply the smaller number by 3, you get the bigger number minus 2. What are the two numbers?", fields: [{label:"Smaller",answer:12},{label:"Bigger",answer:38}], difficulty:"Challenge", hint:"Small + Big = 50, and 3×Small = Big-2. So Big = 3×Small+2. Then Small + 3×Small + 2 = 50." },
+      { q: "A store sells notebooks for 8 shekels and pens for 5 shekels. Amit bought some of each and paid exactly 59 shekels. How many of each did he buy?", fields: [{label:"Notebooks",answer:3},{label:"Pens",answer:7}], difficulty:"Challenge", hint:"Try different numbers of notebooks: if 3 notebooks = 24, then 59-24 = 35, and 35÷5 = 7 pens!" },
+    ]
+  },
+  {
+    title: "Session 2: Building Confidence",
+    color: "#e67e22",
+    questions: [
+      { q: "Lior has 5 more apples than Sara. Together they have 25 apples. How many does each one have?", fields: [{label:"Sara",answer:10},{label:"Lior",answer:15}], difficulty:"Easy", hint:"Sara=x, Lior=x+5. Together: 2x+5=25." },
+      { q: "Mom bought twice as many oranges as bananas. She bought 18 fruits in total. How many of each did she buy?", fields: [{label:"Bananas",answer:6},{label:"Oranges",answer:12}], difficulty:"Easy", hint:"Bananas=x, Oranges=2x. Total: 3x=18." },
+      { q: "A book costs 3 times as much as a magazine. The book costs 14 shekels more than the magazine. How much does each cost?", fields: [{label:"Magazine",answer:7},{label:"Book",answer:21}], difficulty:"Medium", hint:"Book=3×Mag, and Book=Mag+14. So 3×Mag = Mag+14, meaning 2×Mag = 14." },
+      { q: "Tal is 10 years younger than her sister. Together their ages add up to 28. How old is each one?", fields: [{label:"Tal",answer:9},{label:"Sister",answer:19}], difficulty:"Medium", hint:"Tal=Sis-10. Tal+Sis=28. So 2×Sis-10=28." },
+      { q: "Ron has twice as many cards as Gal, plus 5 extra. Together they have 35 cards. How many does each one have?", fields: [{label:"Gal",answer:10},{label:"Ron",answer:25}], difficulty:"Medium-Hard", hint:"Ron=2×Gal+5. Together: Gal+2Gal+5=35, so 3×Gal=30." },
+      { q: "A rectangle's length is 3 times its width. The perimeter is 48 cm. What are the length and width?", fields: [{label:"Width",answer:6},{label:"Length",answer:18}], difficulty:"Medium-Hard", hint:"L=3W. Perimeter=2(L+W)=48, so L+W=24. Then 3W+W=24." },
+      { q: "Noa, Amit, and Dana share 54 stickers. Amit has 3 times as many as Noa. Dana has 9 fewer than Amit. How many does each one have?", fields: [{label:"Noa",answer:9},{label:"Amit",answer:27},{label:"Dana",answer:18}], difficulty:"Hard", hint:"Noa=x, Amit=3x, Dana=3x-9. Total: x+3x+3x-9=54, so 7x=63." },
+      { q: "Two numbers add up to 42. If you subtract the smaller from the bigger, you get 14. What are the two numbers?", fields: [{label:"Smaller",answer:14},{label:"Bigger",answer:28}], difficulty:"Hard", hint:"x+y=42, y-x=14. Add both equations: 2y=56." },
+      { q: "A class has boys and girls. There are 4 more girls than boys. If 2 new girls join, there will be twice as many girls as boys. How many boys and girls are there now?", fields: [{label:"Boys",answer:6},{label:"Girls",answer:10}], difficulty:"Challenge", hint:"Girls=Boys+4. After 2 girls join: Boys+4+2 = 2×Boys. So Boys+6 = 2×Boys." },
+      { q: "Grandma shared candies among 3 grandchildren. The second child got twice what the first got. The third got 3 more than the second. Grandma gave out 28 candies in total. How many did each child get?", fields: [{label:"First",answer:5},{label:"Second",answer:10},{label:"Third",answer:13}], difficulty:"Challenge", hint:"First=x, Second=2x, Third=2x+3. Total: x+2x+2x+3=28, so 5x=25." },
+    ]
+  },
+  {
+    title: "Session 3: Stepping Up",
+    color: "#27ae60",
+    questions: [
+      { q: "A dog weighs 4 times as much as a cat. Together they weigh 25 kg. How much does each one weigh?", fields: [{label:"Cat",answer:5},{label:"Dog",answer:20}], difficulty:"Easy", hint:"Cat=x, Dog=4x. Total: 5x=25." },
+      { q: "Emma has 9 fewer stickers than Mika. Together they have 31 stickers. How many does each one have?", fields: [{label:"Emma",answer:11},{label:"Mika",answer:20}], difficulty:"Easy", hint:"Emma=Mika-9. Together: 2×Mika-9=31, so 2×Mika=40." },
+      { q: "Dad is 3 times as old as his daughter. The difference between their ages is 24 years. How old is each one?", fields: [{label:"Daughter",answer:12},{label:"Dad",answer:36}], difficulty:"Medium", hint:"Dad=3×D. Dad-D=24, so 3D-D=24, meaning 2D=24." },
+      { q: "A rope is cut into two pieces. One piece is 5 times longer than the other. The total length is 42 meters. How long is each piece?", fields: [{label:"Short",answer:7},{label:"Long",answer:35}], difficulty:"Medium", hint:"Short=x, Long=5x. Total: 6x=42." },
+      { q: "Yoni has 3 times as many marbles as Dani, minus 4. Together they have 28 marbles. How many does each one have?", fields: [{label:"Dani",answer:8},{label:"Yoni",answer:20}], difficulty:"Medium-Hard", hint:"Yoni=3×Dani-4. Together: Dani+3Dani-4=28, so 4×Dani=32." },
+      { q: "Two numbers add up to 40. The bigger number is 4 more than twice the smaller number. What are the two numbers?", fields: [{label:"Smaller",answer:12},{label:"Bigger",answer:28}], difficulty:"Medium-Hard", hint:"Big=2×Small+4. Small+2×Small+4=40, so 3×Small=36." },
+      { q: "Three boxes hold 50 balls altogether. Box B has twice as many as Box A. Box C has 5 fewer than Box B. How many balls are in each box?", fields: [{label:"Box A",answer:11},{label:"Box B",answer:22},{label:"Box C",answer:17}], difficulty:"Hard", hint:"A=x, B=2x, C=2x-5. Total: x+2x+2x-5=50, so 5x=55." },
+      { q: "A mother is 5 times as old as her child. In 10 years, she will be 3 times as old. How old are they now?", fields: [{label:"Child",answer:10},{label:"Mother",answer:50}], difficulty:"Hard", hint:"Mom=5C. In 10 years: 5C+10=3(C+10). So 5C+10=3C+30." },
+      { q: "In a zoo, there are birds and rabbits. Together they have 20 heads and 56 legs. How many birds and how many rabbits are there?", fields: [{label:"Birds",answer:12},{label:"Rabbits",answer:8}], difficulty:"Challenge", hint:"B+R=20, 2B+4R=56. From first: B=20-R. Plug in: 2(20-R)+4R=56." },
+      { q: "Three consecutive even numbers add up to 78. What are the three numbers?", fields: [{label:"First",answer:24},{label:"Second",answer:26},{label:"Third",answer:28}], difficulty:"Challenge", hint:"x + (x+2) + (x+4) = 78. So 3x+6=78, meaning 3x=72." },
+    ]
+  },
+  {
+    title: "Session 4: Getting Stronger",
+    color: "#e74c3c",
+    questions: [
+      { q: "Avi has twice as many books as Neta. Together they have 24 books. How many does each one have?", fields: [{label:"Neta",answer:8},{label:"Avi",answer:16}], difficulty:"Easy", hint:"Neta=x, Avi=2x. Total: 3x=24." },
+      { q: "A shirt costs 7 shekels more than a hat. Together they cost 39 shekels. How much does each one cost?", fields: [{label:"Hat",answer:16},{label:"Shirt",answer:23}], difficulty:"Easy", hint:"Hat=x, Shirt=x+7. Total: 2x+7=39." },
+      { q: "Uri ran 3 times as far as Nir. Uri ran 10 km more than Nir. How far did each one run?", fields: [{label:"Nir",answer:5},{label:"Uri",answer:15}], difficulty:"Medium", hint:"Uri=3×Nir and Uri=Nir+10. So 3×Nir=Nir+10, meaning 2×Nir=10." },
+      { q: "A garden's length is 4 meters more than its width. The perimeter is 32 meters. What are the length and width?", fields: [{label:"Width",answer:6},{label:"Length",answer:10}], difficulty:"Medium", hint:"L=W+4. Perimeter=2(L+W)=32, so L+W=16. Then W+4+W=16." },
+      { q: "Tomer has half as many stickers as Rotem, plus 3. Together they have 33 stickers. How many does each one have?", fields: [{label:"Rotem",answer:20},{label:"Tomer",answer:13}], difficulty:"Medium-Hard", hint:"Tomer=Rotem/2+3. Together: Rotem + Rotem/2 + 3 = 33, so 1.5×Rotem=30." },
+      { q: "Two numbers add up to 55. If you subtract the smaller from the bigger, you get 11. What are the two numbers?", fields: [{label:"Smaller",answer:22},{label:"Bigger",answer:33}], difficulty:"Medium-Hard", hint:"x+y=55, y-x=11. Add them: 2y=66." },
+      { q: "Three friends earned money together: 72 shekels. The second earned twice the first. The third earned 12 more than the first. How much did each earn?", fields: [{label:"First",answer:15},{label:"Second",answer:30},{label:"Third",answer:27}], difficulty:"Hard", hint:"F=x, S=2x, T=x+12. Total: x+2x+x+12=72, so 4x=60." },
+      { q: "A grandfather is 6 times as old as his grandson. In 12 years, he will be 3 times as old. How old is each one now?", fields: [{label:"Grandson",answer:8},{label:"Grandfather",answer:48}], difficulty:"Hard", hint:"G=6g. In 12 years: 6g+12=3(g+12). So 6g+12=3g+36." },
+      { q: "A farmer has chickens and goats. He counts 15 heads and 42 legs. How many chickens and how many goats does he have?", fields: [{label:"Chickens",answer:9},{label:"Goats",answer:6}], difficulty:"Challenge", hint:"C+G=15, 2C+4G=42. From first: C=15-G. Plug in: 2(15-G)+4G=42." },
+      { q: "Pick two numbers. The first is 4 more than twice the second. Their sum is 37. What are the numbers?", fields: [{label:"Second",answer:11},{label:"First",answer:26}], difficulty:"Challenge", hint:"First=2×Second+4. First+Second=37. So 2S+4+S=37, meaning 3S=33." },
+    ]
+  },
+  {
+    title: "Session 5: Math Champion",
+    color: "#8e44ad",
+    questions: [
+      { q: "Shira has 4 times as many candies as Ori. Together they have 30 candies. How many does each one have?", fields: [{label:"Ori",answer:6},{label:"Shira",answer:24}], difficulty:"Easy", hint:"Ori=x, Shira=4x. Total: 5x=30." },
+      { q: "A toy car costs 11 shekels less than a toy plane. Together they cost 35 shekels. How much does each one cost?", fields: [{label:"Car",answer:12},{label:"Plane",answer:23}], difficulty:"Easy", hint:"Car=Plane-11. Together: 2×Plane-11=35, so 2×Plane=46." },
+      { q: "Mom is twice as old as Aunt Michal. Together their ages add up to 72. How old is each one?", fields: [{label:"Michal",answer:24},{label:"Mom",answer:48}], difficulty:"Medium", hint:"Mom=2×Michal. Total: 3×Michal=72." },
+      { q: "Dan has 3 times as many cards as Ella, minus 2. Together they have 26 cards. How many does each one have?", fields: [{label:"Ella",answer:7},{label:"Dan",answer:19}], difficulty:"Medium", hint:"Dan=3×Ella-2. Together: Ella+3Ella-2=26, so 4×Ella=28." },
+      { q: "Two sisters saved money. The older one saved 3 times as much as the younger. If the older gives 10 shekels to the younger, they will have the same amount. How much did each save?", fields: [{label:"Younger",answer:10},{label:"Older",answer:30}], difficulty:"Medium-Hard", hint:"Older=3×Younger. After giving 10: Older-10=Younger+10. So 3Y-10=Y+10." },
+      { q: "A triangle has three sides. The second side is twice the first. The third side is 3 cm longer than the first. The perimeter is 27 cm. How long is each side?", fields: [{label:"First",answer:6},{label:"Second",answer:12},{label:"Third",answer:9}], difficulty:"Medium-Hard", hint:"a + 2a + (a+3) = 27. So 4a+3=27, meaning 4a=24." },
+      { q: "Four children share 60 candies. Each child gets 4 more than the one before. How many does each child get?", fields: [{label:"First",answer:9},{label:"Second",answer:13},{label:"Third",answer:17},{label:"Fourth",answer:21}], difficulty:"Hard", hint:"x+(x+4)+(x+8)+(x+12)=60. So 4x+24=60, meaning 4x=36." },
+      { q: "A number is 3 times another number. If you add 8 to the smaller and subtract 4 from the bigger, they become equal. What are the two numbers?", fields: [{label:"Small",answer:6},{label:"Big",answer:18}], difficulty:"Hard", hint:"Big=3×Small. Small+8=Big-4. So Small+8=3Small-4, meaning 12=2Small." },
+      { q: "At a party, there are tables for 4 people and tables for 6 people. There are 8 tables and 38 seats in total. How many of each type of table are there?", fields: [{label:"4-person tables",answer:5},{label:"6-person tables",answer:3}], difficulty:"Challenge", hint:"T4+T6=8, 4×T4+6×T6=38. From first: T4=8-T6. Plug in: 4(8-T6)+6T6=38." },
+      { q: "Three consecutive odd numbers add up to 57. If you multiply the smallest by 2, you get 1 more than the biggest. Is that true? What are the numbers?", fields: [{label:"First",answer:17},{label:"Second",answer:19},{label:"Third",answer:21}], difficulty:"Challenge", hint:"x+(x+2)+(x+4)=57. So 3x+6=57. Then check: is 2×first = third+1?" },
+    ]
+  }
+];
+
+// ==================== GAME STATE ====================
+let currentSession = 0;
+let currentQuestion = 0;
+let totalStars = 0;
+let sessionStars = 0;
+let playerName = "";
+let attempts = 0;
+let selectedSession = 0;
+let hintUsed = false;
+
+// Per-question tracking for the current session
+// Each entry: { qNum, questionText, correct, attempts, hintUsed, wrongAnswers, correctAnswers }
+let sessionLog = [];
+const PARENT_PHONE = "+14126261676";
+
+function pickSession(idx) {
+  selectedSession = idx;
+  document.querySelectorAll('.session-pick-btn').forEach((btn, i) => {
+    if (i === idx) {
+      btn.style.background = btn.style.color;
+      btn.style.color = 'white';
+      btn.style.transform = 'scale(1.1)';
+    } else {
+      const colors = ['#667eea','#e67e22','#27ae60','#e74c3c','#8e44ad'];
+      btn.style.background = 'white';
+      btn.style.color = colors[i];
+      btn.style.transform = 'scale(1)';
+    }
+  });
+}
+
+const diffColors = { "Easy":"#27ae60", "Medium":"#f39c12", "Medium-Hard":"#e67e22", "Hard":"#e74c3c", "Challenge":"#8e44ad" };
+const diffStars = { "Easy":"★", "Medium":"★★", "Medium-Hard":"★★★", "Hard":"★★★★", "Challenge":"★★★★★" };
+const encouragements = ["Amazing! 🌟","Brilliant! 🧠","Fantastic! 🎉","You're a genius! 💡","Super star! ⭐","Incredible! 🚀","Wow, perfect! 🎯","Outstanding! 🏆"];
+
+function showScreen(id) {
+  document.querySelectorAll('#app > div').forEach(d => d.style.display = 'none');
+  document.getElementById(id).style.display = 'block';
+}
+
+function startGame() {
+  playerName = document.getElementById('player-name').value.trim() || "Math Star";
+  currentSession = selectedSession;
+  currentQuestion = 0;
+  totalStars = 0;
+  sessionStars = 0;
+  sessionLog = [];
+  showQuestion();
+}
+
+function showQuestion() {
+  showScreen('question-screen');
+  const sess = sessions[currentSession];
+  const q = sess.questions[currentQuestion];
+  attempts = 0;
+  hintUsed = false;
+
+  // Progress
+  const totalQ = currentSession * 10 + currentQuestion;
+  document.getElementById('progress-info').textContent = `Session ${currentSession+1} / 5`;
+  document.getElementById('progress-fill').style.width = `${(totalQ/50)*100}%`;
+  document.getElementById('stars-display').textContent = `⭐ ${totalStars}`;
+
+  // Badges
+  const sb = document.getElementById('session-badge');
+  sb.textContent = `Session ${currentSession+1}`;
+  sb.style.background = sess.color;
+
+  const db = document.getElementById('difficulty-badge');
+  db.textContent = `${q.difficulty} ${diffStars[q.difficulty]}`;
+  db.style.background = diffColors[q.difficulty] + '22';
+  db.style.color = diffColors[q.difficulty];
+
+  document.getElementById('question-num').textContent = `Question ${currentQuestion+1} of 10`;
+  document.getElementById('question-text').textContent = q.q;
+
+  // Build answer fields
+  const section = document.getElementById('answer-section');
+  section.innerHTML = '';
+  q.fields.forEach((f, i) => {
+    const row = document.createElement('div');
+    row.className = 'answer-row';
+    row.innerHTML = `<span class="answer-label">${f.label}:</span><input type="number" class="answer-input" id="ans-${i}" autocomplete="off">`;
+    section.appendChild(row);
+  });
+
+  // Buttons
+  const btnRow = document.createElement('div');
+  btnRow.style.cssText = 'display:flex;gap:10px;justify-content:center;margin-top:10px;flex-wrap:wrap;';
+  btnRow.innerHTML = `<button class="submit-btn" onclick="checkAnswer()">Check Answer ✓</button><button class="hint-btn" onclick="showHint()">Show Hint 💡</button>`;
+  section.appendChild(btnRow);
+
+  document.getElementById('hint-text').style.display = 'none';
+  document.getElementById('hint-text').textContent = q.hint;
+  document.getElementById('feedback').textContent = '';
+  document.getElementById('feedback').className = 'feedback';
+
+  // Focus first input
+  setTimeout(() => document.getElementById('ans-0')?.focus(), 100);
+
+  // Enter key support
+  section.querySelectorAll('input').forEach(inp => {
+    inp.addEventListener('keydown', e => { if(e.key==='Enter') checkAnswer(); });
+  });
+}
+
+function showHint() {
+  document.getElementById('hint-text').style.display = 'block';
+  hintUsed = true;
+}
+
+function checkAnswer() {
+  const q = sessions[currentSession].questions[currentQuestion];
+  let allCorrect = true;
+
+  q.fields.forEach((f, i) => {
+    const inp = document.getElementById(`ans-${i}`);
+    const val = parseFloat(inp.value);
+    if (val === f.answer) {
+      inp.className = 'answer-input correct';
+    } else {
+      inp.className = 'answer-input wrong';
+      allCorrect = false;
+    }
+  });
+
+  const fb = document.getElementById('feedback');
+  if (allCorrect) {
+    totalStars++;
+    sessionStars++;
+    sessionLog.push({
+      qNum: currentQuestion + 1,
+      questionShort: q.q.substring(0, 60) + (q.q.length > 60 ? '...' : ''),
+      correct: true,
+      attempts: attempts + 1,
+      hintUsed: hintUsed,
+      correctAnswers: q.fields.map(f => `${f.label}=${f.answer}`).join(', ')
+    });
+    document.getElementById('stars-display').textContent = `⭐ ${totalStars}`;
+    fb.textContent = encouragements[Math.floor(Math.random()*encouragements.length)];
+    fb.className = 'feedback correct-feedback';
+    spawnConfetti();
+    setTimeout(() => showReward(), 1200);
+  } else {
+    attempts++;
+    if (attempts >= 3) {
+      // Collect what she answered wrong
+      const wrongAnswers = q.fields.map((f, i) => {
+        const val = parseFloat(document.getElementById(`ans-${i}`).value);
+        return val !== f.answer ? `${f.label}: wrote ${isNaN(val)?'nothing':val}, correct=${f.answer}` : null;
+      }).filter(Boolean);
+      sessionLog.push({
+        qNum: currentQuestion + 1,
+        questionShort: q.q.substring(0, 60) + (q.q.length > 60 ? '...' : ''),
+        correct: false,
+        attempts: 3,
+        hintUsed: hintUsed,
+        wrongAnswers: wrongAnswers,
+        correctAnswers: q.fields.map(f => `${f.label}=${f.answer}`).join(', ')
+      });
+      fb.innerHTML = `Not quite... The answers are: ${q.fields.map(f => `${f.label}=${f.answer}`).join(', ')}`;
+      fb.className = 'feedback wrong-feedback';
+      setTimeout(() => {
+        if (currentQuestion < 9) { currentQuestion++; showQuestion(); }
+        else { showSessionComplete(); }
+      }, 3000);
+    } else {
+      fb.textContent = attempts === 1 ? "Not quite — try again! 💪" : "Almost there — check the hint! 🤔";
+      fb.className = 'feedback wrong-feedback';
+      if (attempts >= 2) showHint();
+    }
+  }
+}
+
+function showReward() {
+  showScreen('reward-screen');
+  document.getElementById('reward-title').textContent = `⭐ ${playerName}, you got it! ⭐`;
+  // Hide all mini games
+  document.querySelectorAll('.mini-game').forEach(g => g.classList.remove('active'));
+}
+
+function nextQuestion() {
+  stopAllGames();
+  if (currentQuestion < 9) {
+    currentQuestion++;
+    showQuestion();
+  } else {
+    showSessionComplete();
+  }
+}
+
+function buildSummaryMessage() {
+  const sess = sessions[currentSession];
+  const correct = sessionLog.filter(l => l.correct).length;
+  const wrong = sessionLog.filter(l => !l.correct);
+  const hintsUsed = sessionLog.filter(l => l.hintUsed).length;
+  const firstTryCount = sessionLog.filter(l => l.correct && l.attempts === 1).length;
+
+  let msg = `📊 *Math Quest Report*\n`;
+  msg += `👤 Player: ${playerName}\n`;
+  msg += `📚 ${sess.title}\n`;
+  msg += `⭐ Score: ${correct}/10\n`;
+  msg += `💡 Hints used: ${hintsUsed}/10\n`;
+  msg += `🎯 Correct on first try: ${firstTryCount}/10\n`;
+  msg += `\n`;
+
+  if (wrong.length === 0) {
+    msg += `✅ Perfect session! All answers correct!\n`;
+  } else {
+    msg += `❌ Mistakes (${wrong.length}):\n`;
+    wrong.forEach(w => {
+      msg += `\n• Q${w.qNum}: ${w.questionShort}\n`;
+      if (w.wrongAnswers) {
+        w.wrongAnswers.forEach(wa => { msg += `  ${wa}\n`; });
+      }
+      msg += `  (Used hint: ${w.hintUsed ? 'Yes' : 'No'})\n`;
+    });
+  }
+
+  // Questions that needed multiple attempts but got right
+  const multiAttempt = sessionLog.filter(l => l.correct && l.attempts > 1);
+  if (multiAttempt.length > 0) {
+    msg += `\n⚠️ Needed extra tries (${multiAttempt.length}):\n`;
+    multiAttempt.forEach(m => {
+      msg += `• Q${m.qNum}: ${m.attempts} attempts${m.hintUsed ? ' + hint' : ''}\n`;
+    });
+  }
+
+  return msg;
+}
+
+function shareWhatsApp() {
+  const msg = buildSummaryMessage();
+  const url = `https://wa.me/${PARENT_PHONE.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(msg)}`;
+  window.open(url, '_blank');
+}
+
+function shareSMS() {
+  const msg = buildSummaryMessage();
+  // iOS uses &body=, Android uses ?body=. We use ? with sms: which works broadly.
+  const url = `sms:${PARENT_PHONE}?&body=${encodeURIComponent(msg)}`;
+  window.open(url, '_blank');
+}
+
+function showSessionComplete() {
+  showScreen('session-complete');
+  document.getElementById('session-complete-text').textContent =
+    `${playerName}, you completed ${sessions[currentSession].title}!`;
+  document.getElementById('session-stars-display').textContent = '⭐'.repeat(sessionStars) || '(keep trying!)';
+
+  // Build summary stats
+  const correct = sessionLog.filter(l => l.correct).length;
+  const hintsUsed = sessionLog.filter(l => l.hintUsed).length;
+  const firstTry = sessionLog.filter(l => l.correct && l.attempts === 1).length;
+  document.getElementById('session-summary-stats').innerHTML =
+    `<span>🎯 First try: ${firstTry}</span> &nbsp; <span>💡 Hints: ${hintsUsed}</span> &nbsp; <span>❌ Mistakes: ${10 - correct}</span>`;
+
+  // Show share buttons
+  document.getElementById('share-buttons').style.display = 'flex';
+
+  if (currentSession >= 4) {
+    document.getElementById('next-session-btn').textContent = 'See Final Results 🏆';
+  } else {
+    document.getElementById('next-session-btn').textContent = 'Next Session ➡️';
+  }
+}
+
+function startNextSession() {
+  sessionStars = 0;
+  sessionLog = [];
+  if (currentSession < 4) {
+    currentSession++;
+    currentQuestion = 0;
+    showQuestion();
+  } else {
+    showScreen('complete-screen');
+    document.getElementById('final-stats').textContent =
+      `${playerName}, you earned ${totalStars} out of 50 stars! ${totalStars >= 40 ? "Absolutely incredible!" : totalStars >= 25 ? "Great job!" : "Keep practicing!"}`;
+    spawnConfetti(); setTimeout(spawnConfetti, 500); setTimeout(spawnConfetti, 1000);
+  }
+}
+
+// ==================== CONFETTI ====================
+function spawnConfetti() {
+  const colors = ['#e74c3c','#f39c12','#27ae60','#3498db','#8e44ad','#e91e63','#00bcd4'];
+  for (let i = 0; i < 30; i++) {
+    const c = document.createElement('div');
+    c.className = 'confetti-piece';
+    c.style.left = Math.random()*100 + 'vw';
+    c.style.background = colors[Math.floor(Math.random()*colors.length)];
+    c.style.animationDuration = (1.5 + Math.random()*2) + 's';
+    c.style.animationDelay = Math.random()*0.5 + 's';
+    document.body.appendChild(c);
+    setTimeout(() => c.remove(), 4000);
+  }
+}
+
+// ==================== STOP ALL GAMES ====================
+function stopAllGames() {
+  if (catchTimer) { clearInterval(catchTimer); catchTimer = null; }
+  if (bubbleTimer) { clearInterval(bubbleTimer); bubbleTimer = null; }
+  if (bubbleSpawner) { clearInterval(bubbleSpawner); bubbleSpawner = null; }
+  if (snakeInterval) { clearInterval(snakeInterval); snakeInterval = null; }
+  document.querySelectorAll('.mini-game').forEach(g => g.classList.remove('active'));
+}
+
+function launchMiniGame(idx) {
+  stopAllGames();
+  document.querySelectorAll('.mini-game').forEach(g => g.classList.remove('active'));
+  const games = ['memory-game','catch-game','bubble-game','snake-game','ttt-game'];
+  document.getElementById(games[idx]).classList.add('active');
+  [initMemory, initCatch, initBubble, initSnake, initTTT][idx]();
+}
+
+// ==================== MEMORY MATCH ====================
+function initMemory() {
+  const emojis = ['🐶','🐱','🐸','🦊','🐼','🐨'];
+  const cards = [...emojis, ...emojis].sort(() => Math.random()-0.5);
+  const grid = document.getElementById('memory-grid');
+  grid.innerHTML = '';
+  let flipped = [], matched = 0, busy = false;
+
+  cards.forEach((emoji, i) => {
+    const card = document.createElement('div');
+    card.className = 'memory-card';
+    card.textContent = '?';
+    card.onclick = () => {
+      if (busy || card.classList.contains('flipped') || card.classList.contains('matched')) return;
+      card.classList.add('flipped');
+      card.textContent = emoji;
+      flipped.push({card, emoji, index: i});
+
+      if (flipped.length === 2) {
+        busy = true;
+        if (flipped[0].emoji === flipped[1].emoji) {
+          flipped.forEach(f => f.card.classList.add('matched'));
+          matched++;
+          document.getElementById('memory-score').textContent = `Pairs found: ${matched} / 6`;
+          flipped = []; busy = false;
+          if (matched === 6) {
+            document.getElementById('memory-score').textContent = '🎉 You found all pairs! 🎉';
+          }
+        } else {
+          setTimeout(() => {
+            flipped.forEach(f => { f.card.classList.remove('flipped'); f.card.textContent = '?'; });
+            flipped = []; busy = false;
+          }, 800);
+        }
+      }
+    };
+    grid.appendChild(card);
+  });
+  document.getElementById('memory-score').textContent = 'Pairs found: 0 / 6';
+}
+
+// ==================== CATCH THE STARS ====================
+let catchTimer = null;
+function initCatch() {
+  const area = document.getElementById('catch-area');
+  area.innerHTML = '';
+  let score = 0, timeLeft = 15;
+  document.getElementById('catch-score').textContent = `Stars caught: 0 | Time: 15s`;
+
+  function spawnStar() {
+    const star = document.createElement('div');
+    star.className = 'star';
+    star.textContent = ['⭐','🌟','💫','✨'][Math.floor(Math.random()*4)];
+    star.style.left = (10 + Math.random()*80) + '%';
+    star.style.top = (10 + Math.random()*70) + '%';
+    star.style.fontSize = (1.2 + Math.random()*1.2) + 'em';
+    star.onclick = () => {
+      score++;
+      document.getElementById('catch-score').textContent = `Stars caught: ${score} | Time: ${timeLeft}s`;
+      star.style.animation = 'starCollect 0.3s ease forwards';
+      setTimeout(() => star.remove(), 300);
+    };
+    area.appendChild(star);
+    setTimeout(() => { if(star.parentNode) star.remove(); }, 2000);
+  }
+
+  const spawner = setInterval(spawnStar, 500);
+  catchTimer = setInterval(() => {
+    timeLeft--;
+    document.getElementById('catch-score').textContent = `Stars caught: ${score} | Time: ${timeLeft}s`;
+    if (timeLeft <= 0) {
+      clearInterval(catchTimer); catchTimer = null;
+      clearInterval(spawner);
+      area.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:100%;color:white;font-size:1.5em;font-weight:bold;">🌟 You caught ${score} stars! 🌟</div>`;
+    }
+  }, 1000);
+}
+
+// ==================== BUBBLE POP ====================
+let bubbleTimer = null, bubbleSpawner = null;
+function initBubble() {
+  const area = document.getElementById('bubble-area');
+  area.innerHTML = '';
+  let score = 0, timeLeft = 15;
+  const colors = ['#e74c3c','#3498db','#27ae60','#f39c12','#8e44ad','#e91e63','#00bcd4','#ff6b6b'];
+  document.getElementById('bubble-score').textContent = `Bubbles popped: 0 | Time: 15s`;
+
+  function spawnBubble() {
+    const bub = document.createElement('div');
+    bub.className = 'bubble';
+    const size = 35 + Math.random()*35;
+    bub.style.width = size + 'px';
+    bub.style.height = size + 'px';
+    bub.style.background = colors[Math.floor(Math.random()*colors.length)];
+    bub.style.left = (5 + Math.random()*85) + '%';
+    bub.style.bottom = '-50px';
+    bub.textContent = ['😊','🎈','🫧','💎'][Math.floor(Math.random()*4)];
+
+    const speed = 1 + Math.random()*2;
+    let y = -50;
+    const mover = setInterval(() => {
+      y += speed;
+      bub.style.bottom = y + 'px';
+      if (y > 350) { clearInterval(mover); bub.remove(); }
+    }, 30);
+
+    bub.onclick = () => {
+      score++;
+      document.getElementById('bubble-score').textContent = `Bubbles popped: ${score} | Time: ${timeLeft}s`;
+      clearInterval(mover);
+      bub.style.transform = 'scale(1.5)';
+      bub.style.opacity = '0';
+      setTimeout(() => bub.remove(), 200);
+    };
+    area.appendChild(bub);
+  }
+
+  bubbleSpawner = setInterval(spawnBubble, 400);
+  bubbleTimer = setInterval(() => {
+    timeLeft--;
+    document.getElementById('bubble-score').textContent = `Bubbles popped: ${score} | Time: ${timeLeft}s`;
+    if (timeLeft <= 0) {
+      clearInterval(bubbleTimer); bubbleTimer = null;
+      clearInterval(bubbleSpawner); bubbleSpawner = null;
+      area.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:100%;font-size:1.5em;font-weight:bold;color:#2c3e50;">🫧 You popped ${score} bubbles! 🫧</div>`;
+    }
+  }, 1000);
+}
+
+// ==================== SNAKE ====================
+let snakeInterval = null, snakeDir = {x:1,y:0}, nextDir = {x:1,y:0};
+function setSnakeDir(x,y) {
+  if (snakeDir.x === -x && snakeDir.y === -y) return;
+  nextDir = {x, y};
+}
+
+function initSnake() {
+  if (snakeInterval) clearInterval(snakeInterval);
+  const canvas = document.getElementById('snake-canvas');
+  const ctx = canvas.getContext('2d');
+  const grid = 20, cols = canvas.width/grid, rows = canvas.height/grid;
+  let snake = [{x:5,y:5},{x:4,y:5},{x:3,y:5}];
+  let food = spawnFood();
+  let score = 0;
+  snakeDir = {x:1,y:0}; nextDir = {x:1,y:0};
+
+  function spawnFood() {
+    let pos;
+    do { pos = {x:Math.floor(Math.random()*cols), y:Math.floor(Math.random()*rows)}; }
+    while (snake.some(s => s.x===pos.x && s.y===pos.y));
+    return pos;
+  }
+
+  function draw() {
+    snakeDir = {...nextDir};
+    const head = {x: snake[0].x + snakeDir.x, y: snake[0].y + snakeDir.y};
+
+    // Wrap around
+    if (head.x < 0) head.x = cols-1;
+    if (head.x >= cols) head.x = 0;
+    if (head.y < 0) head.y = rows-1;
+    if (head.y >= rows) head.y = 0;
+
+    // Self collision
+    if (snake.some(s => s.x===head.x && s.y===head.y)) {
+      clearInterval(snakeInterval); snakeInterval = null;
+      document.getElementById('snake-score').textContent = `Game Over! Score: ${score} 🐍`;
+      return;
+    }
+
+    snake.unshift(head);
+    if (head.x === food.x && head.y === food.y) {
+      score++;
+      document.getElementById('snake-score').textContent = `Score: ${score}`;
+      food = spawnFood();
+    } else {
+      snake.pop();
+    }
+
+    // Draw
+    ctx.fillStyle = '#1a1a2e';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Food
+    ctx.fillStyle = '#e74c3c';
+    ctx.beginPath();
+    ctx.arc(food.x*grid+grid/2, food.y*grid+grid/2, grid/2-2, 0, Math.PI*2);
+    ctx.fill();
+
+    // Snake
+    snake.forEach((s, i) => {
+      ctx.fillStyle = i === 0 ? '#27ae60' : '#2ecc71';
+      ctx.fillRect(s.x*grid+1, s.y*grid+1, grid-2, grid-2);
+      ctx.strokeStyle = '#1a1a2e';
+      ctx.strokeRect(s.x*grid+1, s.y*grid+1, grid-2, grid-2);
+    });
+  }
+
+  document.getElementById('snake-score').textContent = 'Score: 0';
+  snakeInterval = setInterval(draw, 150);
+
+  // Keyboard
+  document.onkeydown = (e) => {
+    switch(e.key) {
+      case 'ArrowUp': setSnakeDir(0,-1); e.preventDefault(); break;
+      case 'ArrowDown': setSnakeDir(0,1); e.preventDefault(); break;
+      case 'ArrowLeft': setSnakeDir(-1,0); e.preventDefault(); break;
+      case 'ArrowRight': setSnakeDir(1,0); e.preventDefault(); break;
+    }
+  };
+}
+
+// ==================== TIC TAC TOE ====================
+let tttBoard, tttGameOver;
+function initTTT() {
+  tttBoard = ['','','','','','','','',''];
+  tttGameOver = false;
+  const grid = document.getElementById('ttt-grid');
+  grid.innerHTML = '';
+  document.getElementById('ttt-status').textContent = "Your turn! You are X";
+
+  for (let i = 0; i < 9; i++) {
+    const cell = document.createElement('div');
+    cell.className = 'ttt-cell';
+    cell.onclick = () => tttMove(i);
+    grid.appendChild(cell);
+  }
+}
+
+function tttMove(i) {
+  if (tttGameOver || tttBoard[i]) return;
+  tttBoard[i] = 'X';
+  renderTTT();
+  if (checkTTTWin('X')) { document.getElementById('ttt-status').textContent = "🎉 You win! 🎉"; tttGameOver = true; return; }
+  if (tttBoard.every(c => c)) { document.getElementById('ttt-status').textContent = "It's a tie! 🤝"; tttGameOver = true; return; }
+
+  // AI move
+  setTimeout(() => {
+    const move = tttAI();
+    tttBoard[move] = 'O';
+    renderTTT();
+    if (checkTTTWin('O')) { document.getElementById('ttt-status').textContent = "Computer wins! Try again 😊"; tttGameOver = true; return; }
+    if (tttBoard.every(c => c)) { document.getElementById('ttt-status').textContent = "It's a tie! 🤝"; tttGameOver = true; return; }
+    document.getElementById('ttt-status').textContent = "Your turn! You are X";
+  }, 300);
+}
+
+function tttAI() {
+  // Try to win
+  for (let i = 0; i < 9; i++) { if (!tttBoard[i]) { tttBoard[i]='O'; if(checkTTTWin('O')){tttBoard[i]='';return i;} tttBoard[i]=''; } }
+  // Block player
+  for (let i = 0; i < 9; i++) { if (!tttBoard[i]) { tttBoard[i]='X'; if(checkTTTWin('X')){tttBoard[i]='';return i;} tttBoard[i]=''; } }
+  // Center
+  if (!tttBoard[4]) return 4;
+  // Random corner
+  const corners = [0,2,6,8].filter(i => !tttBoard[i]);
+  if (corners.length) return corners[Math.floor(Math.random()*corners.length)];
+  // Random
+  const empty = tttBoard.map((c,i) => c ? -1 : i).filter(i => i >= 0);
+  return empty[Math.floor(Math.random()*empty.length)];
+}
+
+function checkTTTWin(p) {
+  const wins = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+  return wins.some(w => w.every(i => tttBoard[i]===p));
+}
+
+function renderTTT() {
+  const cells = document.getElementById('ttt-grid').children;
+  for (let i = 0; i < 9; i++) {
+    cells[i].textContent = tttBoard[i];
+    cells[i].className = 'ttt-cell' + (tttBoard[i]==='X' ? ' x' : tttBoard[i]==='O' ? ' o' : '');
+  }
+}
+
+// ==================== INIT ====================
+document.getElementById('player-name').addEventListener('keydown', e => { if(e.key==='Enter') startGame(); });
+// Default-select Session 1
+pickSession(0);
+</script>
+
+</body>
+</html>
