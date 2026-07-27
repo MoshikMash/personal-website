@@ -393,6 +393,14 @@ body {
     color: white;
 }
 
+.company-section .section-title {
+    color: white;
+}
+
+.company-section .section-title::after {
+    background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+}
+
 .company-content {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -621,6 +629,102 @@ body {
 .award-card p {
     font-size: 1rem;
     opacity: 0.9;
+}
+
+/* Highlights Section */
+.highlights {
+    padding: 60px 0;
+    background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%);
+    color: white;
+}
+
+.highlights .section-title {
+    color: white;
+}
+
+.highlights .section-title::after {
+    background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+}
+
+.highlights-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2rem;
+    margin-top: 2rem;
+}
+
+.highlight-card {
+    text-align: center;
+    padding: 2rem 1rem;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(10px);
+    transition: transform 0.3s ease, background 0.3s ease;
+}
+
+.highlight-card:hover {
+    transform: translateY(-5px);
+    background: rgba(255, 255, 255, 0.18);
+}
+
+.highlight-number {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #fbbf24;
+    margin-bottom: 0.5rem;
+    line-height: 1.2;
+}
+
+.highlight-label {
+    font-size: 1rem;
+    opacity: 0.9;
+    font-weight: 500;
+}
+
+/* Teaching & Service Section */
+.teaching-section {
+    padding: 80px 0;
+    background-color: white;
+}
+
+.teaching-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 2rem;
+    margin-top: 2rem;
+}
+
+.teaching-card {
+    background: #f8fafc;
+    padding: 2rem;
+    border-radius: 16px;
+    border-left: 4px solid #2563eb;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.teaching-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+.teaching-card i {
+    font-size: 2rem;
+    color: #2563eb;
+    margin-bottom: 1rem;
+}
+
+.teaching-card h3 {
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 0.75rem;
+}
+
+.teaching-card p {
+    color: #4b5563;
+    line-height: 1.7;
+    font-size: 0.95rem;
 }
 
 /* Publications Section */
@@ -880,6 +984,33 @@ body {
     padding: 2rem 0;
 }
 
+.footer-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.footer-links {
+    display: flex;
+    gap: 1.5rem;
+}
+
+.footer-links a {
+    color: rgba(255, 255, 255, 0.8);
+    text-decoration: none;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    transition: color 0.3s ease;
+}
+
+.footer-links a:hover {
+    color: #fbbf24;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
     .hamburger {
@@ -971,6 +1102,19 @@ body {
         float: none;
         display: block;
         margin-top: 0.5rem;
+    }
+
+    .highlights-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+    }
+
+    .highlight-number {
+        font-size: 2rem;
+    }
+
+    .teaching-grid {
+        grid-template-columns: 1fr;
     }
 
     .publication-tabs {
