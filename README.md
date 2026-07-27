@@ -5,7 +5,7 @@ A modern, responsive personal website showcasing academic achievements, research
 ## 🚀 Features
 
 - **Professional Profile** - Academic credentials and research background
-- **MASHINNOVATEAI Integration** - Business showcase and services
+- **MashInnovateAI Integration** - Business showcase and services
 - **Research Publications** - Interactive tabs for journal articles and conference proceedings
 - **Experience Timeline** - Career progression and achievements
 - **Awards & Recognition** - Professional accomplishments
@@ -35,7 +35,7 @@ personal_website/
 
 1. **Hero Section** - Introduction with professional photo and contact info
 2. **Experience** - Timeline of professional positions
-3. **Company** - MASHINNOVATEAI business showcase
+3. **Company** - MashInnovateAI business showcase
 4. **Education** - Academic credentials (Ph.D., M.Sc., B.Sc.)
 5. **Awards** - Recognition and achievements
 6. **Publications** - Research work with interactive tabs
@@ -75,12 +75,12 @@ This project is open source and available under the [MIT License](LICENSE).
 
 **Moshe Mash, Ph.D.**
 - AI Researcher & Machine Learning Expert
-- Founder of MASHINNOVATEAI
+- Founder of MashInnovateAI
 - Specializing in NLP, Multi-Agent Systems, and Human-Centric AI
 - Email: moshikmash@gmail.com
 - Phone: +1-412-626-1676
 
 ## 🔗 Links
 
-- [MASHINNOVATEAI](https://mashinnovateai.com/) - Research & Development for Technology Companies
+- [MashInnovateAI](https://mashinnovateai.com/) - Research & Development for Technology Companies
 - [GitHub Profile](https://github.com/yourusername) - Additional projects and contributions
