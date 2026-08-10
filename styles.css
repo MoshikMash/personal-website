@@ -644,6 +644,10 @@ body {
     background-color: white;
 }
 
+.award-paper {
+    margin-bottom: 0.6rem;
+}
+
 .awards-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
