@@ -418,6 +418,29 @@ body {
     font-size: 0.8rem;
 }
 
+.timeline-group-title {
+    max-width: 800px;
+    margin: 0 auto 1.5rem;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #1f2937;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.timeline + .timeline-group-title {
+    margin-top: 3rem;
+}
+
+.timeline-text p {
+    color: #4b5563;
+    line-height: 1.7;
+}
+
+.timeline-text p + p {
+    margin-top: 0.75rem;
+}
+
 /* Company Section */
 .company-section {
     padding: 80px 0;
