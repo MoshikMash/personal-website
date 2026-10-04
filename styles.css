@@ -879,6 +879,17 @@ body {
     background: white;
 }
 
+.cv-page {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.cv-page:last-child {
+    border-bottom: none;
+}
+
 .cv-viewer object {
     display: block;
     border: none;
