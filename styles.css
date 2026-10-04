@@ -106,9 +106,27 @@ body {
 
 .hero-content {
     display: grid;
-    grid-template-columns: 1.7fr 1fr;
+    grid-template-columns: 1.6fr 1fr;
     gap: 4rem;
     align-items: start;
+}
+
+.hero-image {
+    max-width: 360px;
+    margin: 0 auto;
+}
+
+.hero-image .contact-info {
+    margin-top: 1.5rem;
+}
+
+.hero-image .hero-buttons {
+    flex-direction: column;
+    align-items: stretch;
+}
+
+.hero-image .hero-buttons .btn {
+    text-align: center;
 }
 
 
@@ -236,7 +254,7 @@ body {
 
 .profile-img {
     width: 100%;
-    max-width: 250px;
+    max-width: 360px;
     height: auto;
     aspect-ratio: 1;
     border-radius: 16px;
@@ -1139,10 +1157,6 @@ body {
     .hero-content {
         grid-template-columns: 1fr;
         text-align: center;
-    }
-
-    .hero-image {
-        order: -1;
     }
 
     .hero-bio p {
