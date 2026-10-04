@@ -99,7 +99,7 @@ body {
 
 /* Hero Section */
 .hero {
-    padding: 120px 0 80px;
+    padding: 120px 0 40px;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
     min-height: 100vh;
@@ -112,6 +112,13 @@ body {
     grid-template-columns: 1fr 1fr;
     gap: 4rem;
     align-items: start;
+}
+
+@media (min-width: 769px) {
+    .hero-image {
+        position: sticky;
+        top: 100px;
+    }
 }
 
 .hero h1 {
