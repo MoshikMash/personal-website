@@ -106,7 +106,7 @@ body {
 
 .hero-content {
     display: grid;
-    grid-template-columns: 1.35fr 1fr;
+    grid-template-columns: 1.7fr 1fr;
     gap: 4rem;
     align-items: start;
 }
@@ -1139,6 +1139,10 @@ body {
     .hero-content {
         grid-template-columns: 1fr;
         text-align: center;
+    }
+
+    .hero-image {
+        order: -1;
     }
 
     .hero-bio p {
