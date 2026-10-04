@@ -111,9 +111,6 @@ body {
     align-items: start;
 }
 
-.hero-image .contact-info {
-    margin-top: 1.75rem;
-}
 
 @media (min-width: 769px) {
     .hero-image {
