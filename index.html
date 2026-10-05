@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Moshe Mash, Ph.D. &mdash; AI Researcher &middot; Multi-Agent Systems, Human-AI Collaboration &amp; NLP</title>
-    <link rel="stylesheet" href="styles.css?v=20261005c">
+    <link rel="stylesheet" href="styles.css?v=20261005d">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
@@ -25,6 +25,43 @@
     </style>
 </head>
 <body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <h2>Moshe Mash</h2>
+            </div>
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a href="#about" class="nav-link">About</a>
+                </li>
+                <li class="nav-item">
+                    <a href="#experience" class="nav-link">Experience</a>
+                </li>
+                <li class="nav-item">
+                    <a href="#education" class="nav-link">Education</a>
+                </li>
+                <li class="nav-item">
+                    <a href="#publications" class="nav-link">Publications</a>
+                </li>
+                <li class="nav-item">
+                    <a href="#awards" class="nav-link">Awards</a>
+                </li>
+                <li class="nav-item">
+                    <a href="#teaching" class="nav-link">Teaching</a>
+                </li>
+                <li class="nav-item">
+                    <a href="cv/Moshe_Mash_CV.pdf" download class="nav-link">CV</a>
+                </li>
+            </ul>
+            <div class="hamburger">
+                <span class="bar"></span>
+                <span class="bar"></span>
+                <span class="bar"></span>
+            </div>
+        </div>
+    </nav>
+
     <!-- Hero Section -->
     <section id="about" class="hero">
         <div class="container">
@@ -212,6 +249,39 @@
         </div>
     </section>
 
+    <section id="education" class="education-section">
+        <div class="container">
+            <h2 class="section-title">Education</h2>
+            <div class="awards-list education-list">
+                <div class="award-entry">
+                    <div class="award-year">2014&ndash;2018</div>
+                    <div class="award-body">
+                        <h3>Ph.D., Software and Information Systems Engineering</h3>
+                        <p>Ben-Gurion University of the Negev</p>
+                        <p><strong>Dissertation:</strong> Reaching Fair Agreements in Group Settings<br>
+                        <strong>Advisor:</strong> Prof. Ya&rsquo;akov (Kobi) Gal</p>
+                    </div>
+                </div>
+                <div class="award-entry">
+                    <div class="award-year">2011&ndash;2013</div>
+                    <div class="award-body">
+                        <h3>M.Sc., Computer Science (AI specialization)</h3>
+                        <p>Bar-Ilan University</p>
+                        <p><strong>Thesis:</strong> Joint Exploration with Self-Interested Agents<br>
+                        <strong>Advisor:</strong> Prof. David Sarne</p>
+                    </div>
+                </div>
+                <div class="award-entry">
+                    <div class="award-year">2007&ndash;2011</div>
+                    <div class="award-body">
+                        <h3>B.Sc., Software Engineering</h3>
+                        <p>Shenkar College of Engineering and Design</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <section id="publications" class="publications">
         <div class="container">
             <h2 class="section-title">Selected Publications</h2>
@@ -302,7 +372,7 @@
         </div>
     </section>
 
-    <section class="awards">
+    <section id="awards" class="awards">
         <div class="container">
             <h2 class="section-title">Awards & Recognition</h2>
             <div class="awards-list">
@@ -403,6 +473,6 @@
     </section>
 
     <!-- CV Section -->
-    <script src="script.js?v=20261005a"></script>
+    <script src="script.js?v=20261005b"></script>
 </body>
 </html>

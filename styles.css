@@ -110,7 +110,7 @@ body {
 
 /* Hero Section */
 .hero {
-    padding: 64px 0 48px;
+    padding: 120px 0 48px;
     background: linear-gradient(160deg, #0f2744 0%, #1e3a5f 100%);
     color: white;
 }
@@ -144,7 +144,7 @@ body {
 @media (min-width: 769px) {
     .hero-image {
         position: sticky;
-        top: 32px;
+        top: 100px;
     }
 }
 
@@ -844,8 +844,14 @@ body {
     background-color: white;
 }
 
-.service-list .award-body p + p {
+.service-list .award-body p + p,
+.education-list .award-body p + p {
     margin-top: 0.5rem;
+}
+
+.education-section {
+    padding: 80px 0;
+    background-color: white;
 }
 
 /* Publications Section */
@@ -1272,7 +1278,7 @@ body {
     }
 
     .hero {
-        padding: 40px 0 32px;
+        padding: 100px 0 32px;
     }
 
     .hero h1 {
