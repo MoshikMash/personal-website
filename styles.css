@@ -1187,41 +1187,64 @@ body {
         text-align: center;
     }
 
+    /* Phone layout: photo beside the name at the top, contact details and buttons after the bio */
+    .hero-text,
     .hero-image {
-        max-width: none;
-        display: flex;
-        flex-wrap: wrap;
+        display: contents;
+    }
+
+    .hero-content {
+        display: grid;
+        grid-template-columns: 38% 1fr;
+        grid-template-areas:
+            "photo name"
+            "photo tagline"
+            "bio bio"
+            "contact contact"
+            "buttons buttons";
+        column-gap: 1.25rem;
+        row-gap: 0;
         align-items: center;
-        gap: 0 1.25rem;
         text-align: left;
     }
 
-    .hero-image .profile-photo {
-        flex: 0 0 38%;
+    .hero h1 {
+        grid-area: name;
+        align-self: end;
+        margin-bottom: 0.4rem;
+    }
+
+    .hero h2 {
+        grid-area: tagline;
+        align-self: start;
+        margin-bottom: 0;
+        font-size: 1.1rem;
+        line-height: 1.45;
+    }
+
+    .profile-photo {
+        grid-area: photo;
         margin-bottom: 0;
     }
 
-    .hero-image .contact-info {
-        flex: 1 1 0;
-        margin: 0;
-        min-width: 0;
+    .hero-bio {
+        grid-area: bio;
+        margin-top: 1.75rem;
+    }
+
+    .contact-info {
+        grid-area: contact;
+        margin: 0 0 1.25rem;
+    }
+
+    .hero-buttons {
+        grid-area: buttons;
+        flex-direction: column;
+        align-items: stretch;
     }
 
     .hero-image .contact-item {
-        font-size: 0.86rem;
-        white-space: nowrap;
-    }
-
-    @media (max-width: 340px) {
-        .hero-image .contact-item {
-            white-space: normal;
-            overflow-wrap: anywhere;
-        }
-    }
-
-    .hero-image .hero-buttons {
-        flex: 1 1 100%;
-        margin-top: 1.25rem;
+        font-size: 1rem;
     }
 
     .hero-bio p {
