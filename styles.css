@@ -122,33 +122,21 @@ body {
 
 .hero-content {
     display: grid;
-    grid-template-columns: 300px 1fr;
+    grid-template-columns: 260px 1fr;
     grid-template-areas:
-        "photo name"
         "photo tagline"
         "photo contact"
         "photo buttons"
         "bio bio";
     column-gap: 3rem;
     row-gap: 0;
-    align-items: start;
+    align-items: center;
 }
 
-.hero h1 { grid-area: name; }
-.hero h2 { grid-area: tagline; }
-.profile-photo {
-    grid-area: photo;
-    align-self: stretch;
-    margin-bottom: 0;
-}
-
-.profile-photo .profile-img {
-    height: 100%;
-    max-width: none;
-    aspect-ratio: auto;
-}
+.hero-tagline { grid-area: tagline; align-self: end; }
+.profile-photo { grid-area: photo; align-self: center; }
 .contact-info { grid-area: contact; }
-.hero-buttons { grid-area: buttons; }
+.hero-buttons { grid-area: buttons; align-self: start; }
 
 .hero-bio {
     grid-area: bio;
@@ -162,18 +150,12 @@ body {
 
 
 
-.hero h1 {
-    font-size: 3.5rem;
-    font-weight: 700;
-    margin-bottom: 1rem;
-    line-height: 1.2;
-}
-
-.hero h2 {
-    font-size: 1.5rem;
-    font-weight: 400;
+.hero-tagline {
+    font-size: 1.6rem;
+    font-weight: 500;
+    line-height: 1.4;
     margin-bottom: 1.25rem;
-    opacity: 0.9;
+    opacity: 0.95;
 }
 
 .hero-bio {
@@ -279,7 +261,7 @@ body {
 
 .profile-img {
     width: 100%;
-    max-width: 300px;
+    max-width: 260px;
     height: auto;
     aspect-ratio: 1;
     border-radius: 16px;
@@ -1206,7 +1188,6 @@ body {
         display: grid;
         grid-template-columns: 38% 1fr;
         grid-template-areas:
-            "photo name"
             "photo tagline"
             "bio bio"
             "contact contact"
@@ -1217,17 +1198,11 @@ body {
         text-align: left;
     }
 
-    .hero h1 {
-        grid-area: name;
-        align-self: end;
-        margin-bottom: 0.4rem;
-    }
-
-    .hero h2 {
+    .hero-tagline {
         grid-area: tagline;
-        align-self: start;
+        align-self: center;
         margin-bottom: 0;
-        font-size: 1.1rem;
+        font-size: 1.15rem;
         line-height: 1.45;
     }
 
@@ -1265,14 +1240,6 @@ body {
     .hero-bio p {
         text-align: left;
         gap: 2rem;
-    }
-
-    .hero h1 {
-        font-size: 2.5rem;
-    }
-
-    .hero h2 {
-        font-size: 1.3rem;
     }
 
     .hero-buttons {
@@ -1354,10 +1321,6 @@ body {
 
     .hero {
         padding: 100px 0 32px;
-    }
-
-    .hero h1 {
-        font-size: 2rem;
     }
 
     .section-title {
