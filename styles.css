@@ -151,11 +151,21 @@ body {
 
 
 .hero-tagline {
-    font-size: 1.6rem;
-    font-weight: 500;
-    line-height: 1.4;
     margin-bottom: 1.25rem;
-    opacity: 0.95;
+}
+
+.hero-tagline h1 {
+    font-size: 2.4rem;
+    font-weight: 700;
+    line-height: 1.2;
+    margin-bottom: 0.4rem;
+}
+
+.hero-areas {
+    font-size: 1.3rem;
+    font-weight: 400;
+    line-height: 1.4;
+    opacity: 0.9;
 }
 
 .hero-bio {
@@ -1202,8 +1212,16 @@ body {
         grid-area: tagline;
         align-self: center;
         margin-bottom: 0;
-        font-size: 1.15rem;
-        line-height: 1.45;
+    }
+
+    .hero-tagline h1 {
+        font-size: 1.6rem;
+        margin-bottom: 0.3rem;
+    }
+
+    .hero-areas {
+        font-size: 1rem;
+        line-height: 1.4;
     }
 
     .profile-photo {
