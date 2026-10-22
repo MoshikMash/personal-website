@@ -126,7 +126,6 @@ body {
     grid-template-areas:
         "photo tagline"
         "photo contact"
-        "photo buttons"
         "bio bio";
     column-gap: 3rem;
     row-gap: 0;
@@ -136,7 +135,6 @@ body {
 .hero-tagline { grid-area: tagline; align-self: end; }
 .profile-photo { grid-area: photo; align-self: center; }
 .contact-info { grid-area: contact; }
-.hero-buttons { grid-area: buttons; align-self: start; }
 
 .hero-bio {
     grid-area: bio;
@@ -183,7 +181,8 @@ body {
 }
 
 .contact-info {
-    margin-bottom: 1.25rem;
+    margin-bottom: 0;
+    align-self: start;
 }
 
 .contact-item {
@@ -1206,8 +1205,7 @@ body {
         grid-template-areas:
             "photo tagline"
             "bio bio"
-            "contact contact"
-            "buttons buttons";
+            "contact contact";
         column-gap: 1.25rem;
         row-gap: 0;
         align-items: center;
