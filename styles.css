@@ -122,7 +122,7 @@ body {
 
 .hero-content {
     display: grid;
-    grid-template-columns: 260px 1fr;
+    grid-template-columns: 300px 1fr;
     grid-template-areas:
         "photo name"
         "photo tagline"
@@ -136,7 +136,17 @@ body {
 
 .hero h1 { grid-area: name; }
 .hero h2 { grid-area: tagline; }
-.profile-photo { grid-area: photo; }
+.profile-photo {
+    grid-area: photo;
+    align-self: stretch;
+    margin-bottom: 0;
+}
+
+.profile-photo .profile-img {
+    height: 100%;
+    max-width: none;
+    aspect-ratio: auto;
+}
 .contact-info { grid-area: contact; }
 .hero-buttons { grid-area: buttons; }
 
@@ -262,14 +272,14 @@ body {
 }
 
 .profile-photo {
-    margin-bottom: 2rem;
+    margin-bottom: 0;
     display: flex;
     justify-content: center;
 }
 
 .profile-img {
     width: 100%;
-    max-width: 260px;
+    max-width: 300px;
     height: auto;
     aspect-ratio: 1;
     border-radius: 16px;
@@ -1224,6 +1234,12 @@ body {
     .profile-photo {
         grid-area: photo;
         margin-bottom: 0;
+        align-self: center;
+    }
+
+    .profile-photo .profile-img {
+        height: auto;
+        aspect-ratio: 1;
     }
 
     .hero-bio {
