@@ -1206,9 +1206,9 @@ body {
         grid-template-columns: 38% 1fr;
         grid-template-areas:
             "photo tagline"
-            "bio bio"
             "contact contact"
-            "buttons buttons";
+            "buttons buttons"
+            "bio bio";
         column-gap: 1.25rem;
         row-gap: 0;
         align-items: center;
@@ -1249,7 +1249,11 @@ body {
 
     .contact-info {
         grid-area: contact;
-        margin: 0 0 1.25rem;
+        margin: 1.5rem 0 1rem;
+    }
+
+    .hero-bio {
+        margin-top: 2rem;
     }
 
     .hero-buttons {
