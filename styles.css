@@ -1133,6 +1133,11 @@ body {
     min-height: 120px;
 }
 
+.page-top {
+    padding-top: 120px;
+    flex: 1 0 auto;
+}
+
 /* Footer */
 .footer {
     background: #1f2937;
