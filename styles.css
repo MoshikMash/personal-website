@@ -126,7 +126,6 @@ body {
     grid-template-areas:
         "photo tagline"
         "photo contact"
-        "photo buttons"
         "bio bio";
     column-gap: 3rem;
     row-gap: 0;
@@ -1218,7 +1217,6 @@ body {
         grid-template-areas:
             "photo tagline"
             "contact contact"
-            "buttons buttons"
             "bio bio";
         column-gap: 1.25rem;
         row-gap: 0;
