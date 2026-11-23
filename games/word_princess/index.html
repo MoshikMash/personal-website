@@ -219,7 +219,8 @@ button:active{transform:scale(.95)}
     <button class="pbtn ghost" id="applyLvl">⬆️ להעלות את כל המילים לרמה הזאת</button>
     <label>קול באנגלית<select id="voiceSelect"></select></label>
     <button class="pbtn ghost" id="testVoice">🔊 בדיקת קול</button>
-    <p class="note">הקולות מגיעים מהטלפון עצמו. באייפון מומלץ "Samantha", באנדרואיד "Google US English".</p>
+    <p class="note" id="speechDiag"></p>
+    <p class="note">הקולות מגיעים מהטלפון עצמו. באייפון מומלץ "Samantha", באנדרואיד "Google US English". אם אין קול בכלל: באייפון בדקי שמתג ההשתקה בצד לא מופעל והעלי ווליום, ונסי לפתוח את המשחק ישירות ב-Safari.</p>
   </section>
 
   <section>
@@ -303,9 +304,9 @@ function tone(f,d=0.12,type='sine',vol=0.18,when=0){
 }
 const sfx={ tap:()=>tone(880,0.1), wrong:()=>{tone(180,0.18,'triangle',0.12);}, win:()=>{[523,659,784,1046].forEach((f,i)=>tone(f,0.18,'sine',0.16,i*0.09));}, sticker:()=>{[523,659,784,880,1046,1318].forEach((f,i)=>tone(f,0.22,'triangle',0.14,i*0.1));} };
 
-let voices=[];
-function loadVoices(){ voices=(speechSynthesis.getVoices()||[]).filter(v=>/^en/i.test(v.lang)); fillVoiceSelect(); }
-if('speechSynthesis' in window){ loadVoices(); speechSynthesis.onvoiceschanged=loadVoices; }
+let voices=[], keepAlive=[], speechLog={supported:'speechSynthesis' in window, primed:false, spoken:0, errors:[]};
+function loadVoices(){ try{ voices=(speechSynthesis.getVoices()||[]).filter(v=>/^en/i.test(v.lang)); }catch(e){ voices=[]; } fillVoiceSelect(); }
+if(speechLog.supported){ loadVoices(); speechSynthesis.onvoiceschanged=loadVoices; }
 function pickVoice(){
   if(!voices.length) return null;
   if(state.settings.voice){ const v=voices.find(v=>v.name===state.settings.voice); if(v) return v; }
@@ -313,12 +314,30 @@ function pickVoice(){
   for(const p of prefs){ const v=voices.find(v=>v.name.includes(p)); if(v) return v; }
   return voices.find(v=>v.lang==='en-US')||voices[0];
 }
-function speak(text,{rate=0.85,pitch=1.15,cancel=true}={}){
-  if(!('speechSynthesis' in window)) return;
-  try{ if(cancel) speechSynthesis.cancel();
-    const u=new SpeechSynthesisUtterance(text); u.lang='en-US'; u.rate=rate; u.pitch=pitch; const v=pickVoice(); if(v) u.voice=v; speechSynthesis.speak(u);
-  }catch(e){}
+/* iOS/Android need speech to be "unlocked" by a user gesture; do it once on the first touch. */
+function primeSpeech(){
+  if(speechLog.primed||!speechLog.supported) return; speechLog.primed=true;
+  try{ const u=new SpeechSynthesisUtterance(' '); u.volume=0; speechSynthesis.speak(u); speechSynthesis.resume(); }catch(e){}
+  try{ actx = actx || new (window.AudioContext||window.webkitAudioContext)(); actx.resume(); }catch(e){}
 }
+['touchstart','pointerdown','mousedown','keydown'].forEach(ev=>document.addEventListener(ev,primeSpeech,{once:true,passive:true}));
+function speak(text,{rate=0.85,pitch=1.15,cancel=true}={}){
+  if(!speechLog.supported) return;
+  const go=()=>{ try{
+    const u=new SpeechSynthesisUtterance(text); u.lang='en-US'; u.rate=rate; u.pitch=pitch; u.volume=1;
+    const v=pickVoice(); if(v) u.voice=v;
+    u.onstart=()=>{ speechLog.spoken++; };
+    u.onerror=e=>{ if(e.error!=='interrupted'&&e.error!=='canceled'){ speechLog.errors.push(e.error||'error'); if(speechLog.errors.length>5) speechLog.errors.shift(); } };
+    keepAlive.push(u); if(keepAlive.length>30) keepAlive.shift(); /* keep references: Safari drops utterances that get garbage-collected */
+    speechSynthesis.resume(); speechSynthesis.speak(u);
+  }catch(e){ speechLog.errors.push(String(e)); } };
+  try{
+    if(cancel && (speechSynthesis.speaking||speechSynthesis.pending)){ speechSynthesis.cancel(); setTimeout(go,120); } /* cancel() right before speak() goes silent on iOS, so wait a beat */
+    else go();
+  }catch(e){ go(); }
+}
+/* Safari sometimes wedges in the "speaking" state; unstick it. */
+setInterval(()=>{ try{ if(speechLog.supported && speechSynthesis.paused) speechSynthesis.resume(); }catch(e){} },3000);
 function speakToken(tok,sentence){
   if(sentence) speak(tok,{rate:0.9});
   else speak(tok.toUpperCase(),{rate:0.8}); // letter name
@@ -464,7 +483,7 @@ function renderParent(){
   $('customList').innerHTML=state.custom.map((c,i)=>`<span class="chip">${c.emoji} ${c.word} <button data-i="${i}">✕</button></span>`).join('');
   $('customList').querySelectorAll('button').forEach(b=>b.onclick=()=>{ state.custom.splice(+b.dataset.i,1); save(); renderParent(); });
   $('startLvl').value=String(state.settings.startLvl);
-  fillVoiceSelect();
+  fillVoiceSelect(); renderDiag();
 }
 
 /* ================= EVENTS ================= */
@@ -488,7 +507,9 @@ $('spellSwitch').onclick=()=>{ state.settings.spell=!state.settings.spell; save(
 $('voiceSelect').onchange=e=>{ state.settings.voice=e.target.value; save(); };
 $('startLvl').onchange=e=>{ state.settings.startLvl=+e.target.value; save(); };
 $('applyLvl').onclick=()=>{ Object.values(state.words).forEach(w=>{ w.lvl=Math.max(w.lvl,state.settings.startLvl); }); save(); renderParent(); alert('בוצע'); };
-$('testVoice').onclick=()=>speak('Hello princess! C. A. T. Cat!');
+function renderDiag(){ const d=$('speechDiag'); if(!d) return; let v=0; try{ v=speechSynthesis.getVoices().length; }catch(e){}
+  d.textContent=!speechLog.supported?'❌ הדפדפן הזה לא תומך בדיבור. נסי לפתוח את המשחק ב-Safari (אייפון) או ב-Chrome (אנדרואיד).':`מנוע דיבור: זמין · קולות במכשיר: ${v} · קולות באנגלית: ${voices.length} · הושמעו: ${speechLog.spoken}`+(speechLog.errors.length?` · שגיאות: ${speechLog.errors.join(', ')}`:''); }
+$('testVoice').onclick=()=>{ speak('Hello princess! C. A. T. Cat!'); setTimeout(renderDiag,1500); };
 $('addCustom').onclick=()=>{ const word=$('customWord').value.trim().toLowerCase(), emoji=$('customEmoji').value.trim()||'⭐', world=$('customWorld').value;
   if(!word) return; state.custom.push({world,word,emoji}); save(); $('customWord').value=''; $('customEmoji').value=''; renderParent(); };
 $('unlockAll').onclick=()=>{ state.unlockedAll=true; save(); renderParent(); alert('כל העולמות פתוחים!'); };
