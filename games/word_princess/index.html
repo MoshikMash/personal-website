@@ -203,7 +203,7 @@ button:active{transform:scale(.95)}
   <section>
     <h3>התקדמות</h3>
     <table id="statsTable"></table>
-    <p class="note">רמת מילה: 1 = האותיות מסודרות, 2 = מעורבבות, 3 = המילה נעלמת אחרי כמה שניות, 4 = ללא רמז.</p>
+    <p class="note">רמת מילה: 1 = המילה מוצגת והאותיות מעורבבות, 2 = המילה נעלמת אחרי 3 שניות, 3 = רק תמונה וקול, 4 = רק תמונה וקול עם הרבה אותיות מבלבלות. מילה שמאייתים בלי טעות עולה רמה.</p>
   </section>
 
   <section>
@@ -215,6 +215,8 @@ button:active{transform:scale(.95)}
     <h3>הגדרות</h3>
     <div class="toggle"><span>אותיות גדולות (ABC) במקום קטנות (abc)</span><div class="switch" id="upperSwitch"></div></div>
     <div class="toggle"><span>לאיית את המילה בקול אחרי שמסיימים</span><div class="switch" id="spellSwitch"></div></div>
+    <label>רמת התחלה למילים חדשות<select id="startLvl"><option value="0">1 - המילה מוצגת</option><option value="1">2 - המילה נעלמת אחרי 3 שניות</option><option value="2">3 - רק תמונה וקול</option></select></label>
+    <button class="pbtn ghost" id="applyLvl">⬆️ להעלות את כל המילים לרמה הזאת</button>
     <label>קול באנגלית<select id="voiceSelect"></select></label>
     <button class="pbtn ghost" id="testVoice">🔊 בדיקת קול</button>
     <p class="note">הקולות מגיעים מהטלפון עצמו. באייפון מומלץ "Samantha", באנדרואיד "Google US English".</p>
@@ -264,12 +266,14 @@ const KEY = 'wordPrincess.v1';
 
 /* ================= STATE ================= */
 let state = load();
-function defaultState(){ return { settings:{upper:true, spell:true, voice:''}, words:{}, worlds:{}, custom:[], unlockedAll:false }; }
-function load(){ try{ const s=JSON.parse(localStorage.getItem(KEY)); if(s&&s.settings) return Object.assign(defaultState(),s);}catch(e){} return defaultState(); }
+function defaultState(){ return { v:2, settings:{upper:true, spell:true, voice:'', startLvl:1}, words:{}, worlds:{}, custom:[], unlockedAll:false }; }
+function load(){ try{ const s=JSON.parse(localStorage.getItem(KEY)); if(s&&s.settings){ const st=Object.assign(defaultState(),s); st.settings=Object.assign(defaultState().settings,s.settings);
+  if(s.v!==2){ Object.values(st.words).forEach(w=>{ w.lvl=Math.max(w.lvl,st.settings.startLvl); }); st.v=2; }
+  return st; } }catch(e){} return defaultState(); }
 function save(){ try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){} }
 function wstate(id){ return state.worlds[id] || (state.worlds[id]={stars:0,stickers:[],rounds:0,lastRound:[]}); }
 function wordKey(w,text){ return w.id+':'+text; }
-function wstat(w,text){ const k=wordKey(w,text); return state.words[k] || (state.words[k]={lvl:0,seen:0,miss:0,streak:0}); }
+function wstat(w,text){ const k=wordKey(w,text); return state.words[k] || (state.words[k]={lvl:state.settings.startLvl||0,seen:0,miss:0,streak:0}); }
 function worldWords(w){ return w.words.concat(state.custom.filter(c=>c.world===w.id).map(c=>[c.word,c.emoji])); }
 function totalStars(){ return WORLDS.reduce((a,w)=>a+wstate(w.id).stars,0); }
 function isUnlocked(w,i){ if(state.unlockedAll||i===0) return true; return wstate(WORLDS[i-1].id).stars>=w.unlockStars; }
@@ -362,19 +366,20 @@ function renderDots(){ $('dots').innerHTML=G.items.map((_,k)=>`<b class="${k<G.i
 function tokensOf(text,sentence){ return sentence? text.split(' ') : text.split(''); }
 function buildTray(tokens,tier,sentence){
   let extra=[];
-  if(sentence){ if(tier>=2){ const c=SENTENCE_DISTRACTORS.filter(x=>!tokens.includes(x)); extra=[pick(c)]; } }
-  else{
-    const need = tier===0?0: tier===1?2:3;
+  if(sentence){
+    const need = tier===0?1: tier===3?3:2;
+    const c=shuffle(SENTENCE_DISTRACTORS.filter(x=>!tokens.includes(x)));
+    extra=c.slice(0,need);
+  } else {
+    const need = tier===0?3: tier===1?3: tier===2?4:5;
     const low=tokens.map(t=>t.toLowerCase());
-    const alpha='abcdefghijklmnopqrstuvwxyz'.split('').filter(c=>!low.includes(c));
-    let cands=alpha;
-    if(tier>=3){ const conf=[...new Set(low.flatMap(c=>(CONFUSABLE[c]||'').split('')))].filter(c=>!low.includes(c)); cands=conf.concat(alpha); }
-    const seen=new Set(); for(const c of cands){ if(extra.length>=need) break; if(!seen.has(c)){ seen.add(c); extra.push(c);} }
-    // for lowest-confusable tiers, use random letters rather than alphabet order
-    if(tier<3) extra=shuffle(alpha).slice(0,need);
+    const alpha=shuffle('abcdefghijklmnopqrstuvwxyz'.split('').filter(c=>!low.includes(c)));
+    const conf=shuffle([...new Set(low.flatMap(c=>(CONFUSABLE[c]||'').split('')))].filter(c=>!low.includes(c)));
+    const nConf = tier===0?0: tier===1?1: tier===2?2:3;
+    extra=conf.slice(0,nConf);
+    for(const c of alpha){ if(extra.length>=need) break; if(!extra.includes(c)) extra.push(c); }
   }
-  const all=tokens.concat(extra);
-  return tier===0 ? all : shuffle(all);
+  return shuffle(tokens.concat(extra));
 }
 function nextItem(){
   if(!G) return;
@@ -386,15 +391,16 @@ function nextItem(){
   // slots
   const slots=$('slots'); slots.innerHTML='';
   G.cur.tokens.forEach((tok,k)=>{ const d=document.createElement('div'); d.className='slot'+(G.sentence?' sentence':'')+(k===0?' next':''); d.textContent=fmt(tok); d.dataset.k=k; slots.appendChild(d); });
-  setGhost(tier<=1 || tier===2);
-  if(tier===2) G.ghostTimer=setTimeout(()=>setGhost(false),3200);
+  setGhost(tier<=1);
+  if(tier===1) G.ghostTimer=setTimeout(()=>setGhost(false),3000);
   // tray
   const tray=$('tray'); tray.innerHTML='';
   buildTray(G.cur.tokens,tier,G.sentence).forEach(tok=>{ const b=document.createElement('button'); b.className='tile'+(G.sentence?' sentence':''); b.textContent=fmt(tok); b.dataset.tok=tok; b.onclick=()=>tapTile(b); tray.appendChild(b); });
   setTimeout(()=>speak(it.t,{rate:0.8}),350);
 }
 function setGhost(on){ document.querySelectorAll('.slot:not(.filled)').forEach(s=>s.classList.toggle('ghost',on)); }
-function peek(){ if(!G||!G.cur) return; speak(G.cur.text,{rate:0.8}); if(G.cur.tier>=2){ setGhost(true); clearTimeout(G.peekTimer); G.peekTimer=setTimeout(()=>setGhost(false),1500); } }
+function peek(){ if(!G||!G.cur||G.cur.done) return; speak(G.cur.text,{rate:0.8});
+  if(G.cur.tier===1 && !G.cur.peeked){ G.cur.peeked=true; G.cur.mistakes++; setGhost(true); clearTimeout(G.peekTimer); G.peekTimer=setTimeout(()=>setGhost(false),1500); } }
 function tapTile(b){
   if(!G||!G.cur||G.cur.done) return;
   const c=G.cur, expected=c.tokens[c.pos], tok=b.dataset.tok;
@@ -408,7 +414,7 @@ function tapTile(b){
   } else {
     sfx.wrong(); c.mistakes++; c.wrongHere++;
     b.classList.remove('wrong'); void b.offsetWidth; b.classList.add('wrong');
-    if(c.wrongHere>=2){ const h=[...document.querySelectorAll('.tile:not(.used)')].find(t=>t.dataset.tok===expected); if(h) h.classList.add('hint'); if(c.tier>=2) setGhost(true); }
+    if(c.wrongHere>=(c.tier>=3?3:2)){ const h=[...document.querySelectorAll('.tile:not(.used)')].find(t=>t.dataset.tok===expected); if(h) h.classList.add('hint'); }
   }
 }
 function wordDone(){
@@ -457,6 +463,7 @@ function renderParent(){
   $('customWorld').innerHTML=WORLDS.map(w=>`<option value="${w.id}">${w.emoji} ${w.name}</option>`).join('');
   $('customList').innerHTML=state.custom.map((c,i)=>`<span class="chip">${c.emoji} ${c.word} <button data-i="${i}">✕</button></span>`).join('');
   $('customList').querySelectorAll('button').forEach(b=>b.onclick=()=>{ state.custom.splice(+b.dataset.i,1); save(); renderParent(); });
+  $('startLvl').value=String(state.settings.startLvl);
   fillVoiceSelect();
 }
 
@@ -479,6 +486,8 @@ $('parentClose').onclick=()=>{ renderHome(); show('home'); };
 $('upperSwitch').onclick=()=>{ state.settings.upper=!state.settings.upper; save(); renderParent(); };
 $('spellSwitch').onclick=()=>{ state.settings.spell=!state.settings.spell; save(); renderParent(); };
 $('voiceSelect').onchange=e=>{ state.settings.voice=e.target.value; save(); };
+$('startLvl').onchange=e=>{ state.settings.startLvl=+e.target.value; save(); };
+$('applyLvl').onclick=()=>{ Object.values(state.words).forEach(w=>{ w.lvl=Math.max(w.lvl,state.settings.startLvl); }); save(); renderParent(); alert('בוצע'); };
 $('testVoice').onclick=()=>speak('Hello princess! C. A. T. Cat!');
 $('addCustom').onclick=()=>{ const word=$('customWord').value.trim().toLowerCase(), emoji=$('customEmoji').value.trim()||'⭐', world=$('customWorld').value;
   if(!word) return; state.custom.push({world,word,emoji}); save(); $('customWord').value=''; $('customEmoji').value=''; renderParent(); };
