@@ -127,6 +127,7 @@ button:active{transform:scale(.95)}
 #parent h3{font-size:18px;margin-bottom:8px}
 #parent table{width:100%;border-collapse:collapse}
 #parent td,#parent th{padding:6px 4px;border-bottom:1px solid #f5dcea;text-align:right;font-size:15px}
+#parent td select{width:auto;min-width:64px;margin:0;padding:6px}
 #parent input,#parent select{font-family:inherit;font-size:16px;padding:10px;border-radius:12px;border:2px solid #f3cde3;width:100%;margin-top:6px;background:#fff}
 #parent .row{display:flex;gap:8px;flex-wrap:wrap}
 #parent .row>*{flex:1;min-width:110px}
@@ -359,7 +360,7 @@ function renderHome(){
     const done=doneCount(w), need=needCount(w);
     const b=document.createElement('button'); b.className='world'+(unlocked?'':' locked');
     b.innerHTML=`<div class="em">${w.emoji}</div><div class="info"><div class="name">${w.name}</div>
-      <div class="sub"><span>Level ${ws.lvl+1}</span><span>📝 ${Math.min(done,need)}/${need}</span><span>⭐ ${ws.stars}</span>${unlocked?'':`<span>🔒 finish ${WORLDS[i-1].emoji} level 1</span>`}</div>
+      <div class="sub">${unlocked?`<span>Level ${ws.lvl+1}</span><span>📝 ${Math.min(done,need)}/${need}</span><span>⭐ ${ws.stars}</span>`:`<span>Finish ${WORLDS[i-1].emoji} level 1</span>`}</div>
       <div class="bar"><i style="width:${Math.round(100*Math.min(done,need)/need)}%"></i></div></div>${unlocked?'<div class="go">▶️</div>':''}`;
     b.onclick=()=>{ if(!unlocked){ sfx.wrong(); b.classList.add('wrong'); setTimeout(()=>b.classList.remove('wrong'),400); speak('Finish the words in '+WORLDS[i-1].name+' first!'); return; } startRound(w); };
     box.appendChild(b);
