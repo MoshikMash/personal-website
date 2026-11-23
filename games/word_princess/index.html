@@ -204,7 +204,7 @@ button:active{transform:scale(.95)}
   <section>
     <h3>התקדמות</h3>
     <table id="statsTable"></table>
-    <p class="note">רמת מילה: 1 = המילה מוצגת, 2 = המילה מוצגת חלש, 3 = רק תמונה וקול, 4 = רק תמונה וקול עם הרבה אותיות מבלבלות. מילה עולה רמה אחרי שמאייתים אותה נכון פעמיים ברצף.</p>
+    <p class="note">לכל עולם יש רמה אחת לכל המילים שלו: 1 = המילה מוצגת, 2 = המילה מוצגת חלש, 3 = רק תמונה וקול, 4 = רק תמונה וקול עם הרבה אותיות מבלבלות. העולם עולה רמה כשכמעט כל המילים שלו (11 מתוך 12) אויתו ברמה הזאת עם 2 כוכבים לפחות. אפשר לשנות רמה ידנית בטבלה. עולם חדש נפתח כשהעולם הקודם סיים את רמה 1.</p>
   </section>
 
   <section>
@@ -216,8 +216,6 @@ button:active{transform:scale(.95)}
     <h3>הגדרות</h3>
     <div class="toggle"><span>אותיות גדולות (ABC) במקום קטנות (abc)</span><div class="switch" id="upperSwitch"></div></div>
     <div class="toggle"><span>לאיית את המילה בקול אחרי שמסיימים</span><div class="switch" id="spellSwitch"></div></div>
-    <label>רמת התחלה למילים חדשות<select id="startLvl"><option value="0">1 - המילה מוצגת</option><option value="1">2 - המילה מוצגת חלש</option><option value="2">3 - רק תמונה וקול</option></select></label>
-    <button class="pbtn ghost" id="applyLvl">⬆️ להעלות את כל המילים לרמה הזאת</button>
     <label>קול באנגלית<select id="voiceSelect"></select></label>
     <button class="pbtn ghost" id="testVoice">🔊 בדיקת קול</button>
     <p class="note" id="speechDiag"></p>
@@ -268,18 +266,22 @@ const KEY = 'wordPrincess.v1';
 
 /* ================= STATE ================= */
 let state = load();
-function defaultState(){ return { v:3, settings:{upper:true, spell:true, voice:'', startLvl:0}, words:{}, worlds:{}, custom:[], unlockedAll:false }; }
+function defaultState(){ return { v:4, settings:{upper:true, spell:true, voice:''}, words:{}, worlds:{}, custom:[], unlockedAll:false }; }
 function load(){ try{ const s=JSON.parse(localStorage.getItem(KEY)); if(s&&s.settings){ const st=Object.assign(defaultState(),s); st.settings=Object.assign(defaultState().settings,s.settings);
-  if(s.v!==2){ Object.values(st.words).forEach(w=>{ w.lvl=Math.max(w.lvl,st.settings.startLvl); }); st.v=2; }
-  if(s.v===2){ if(st.settings.startLvl===1) st.settings.startLvl=0; st.v=3; }
+  if(s.v!==4){ /* older saves tracked a level per word; now the whole world has one level */
+    Object.values(st.words).forEach(w=>{ w.best=(w.lvl||0)>=1?0:-1; delete w.lvl; }); Object.values(st.worlds).forEach(ws=>{ ws.lvl=0; }); st.v=4; }
   return st; } }catch(e){} return defaultState(); }
 function save(){ try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){} }
-function wstate(id){ return state.worlds[id] || (state.worlds[id]={stars:0,stickers:[],rounds:0,lastRound:[]}); }
+function wstate(id){ return state.worlds[id] || (state.worlds[id]={lvl:0,stars:0,stickers:[],rounds:0,lastRound:[]}); }
 function wordKey(w,text){ return w.id+':'+text; }
-function wstat(w,text){ const k=wordKey(w,text); return state.words[k] || (state.words[k]={lvl:state.settings.startLvl||0,seen:0,miss:0,streak:0}); }
+function wstat(w,text){ const k=wordKey(w,text); return state.words[k] || (state.words[k]={best:-1,seen:0,miss:0,streak:0}); }
+/* a word is "done" at the world's current level once it was spelled there with at most 2 mistakes */
+function isDone(w,text){ return wstat(w,text).best>=wstate(w.id).lvl; }
+function doneCount(w){ return worldWords(w).filter(([t])=>isDone(w,t)).length; }
+function needCount(w){ const n=worldWords(w).length; return Math.max(Math.min(10,n), n-1); }
 function worldWords(w){ return w.words.concat(state.custom.filter(c=>c.world===w.id).map(c=>[c.word,c.emoji])); }
 function totalStars(){ return WORLDS.reduce((a,w)=>a+wstate(w.id).stars,0); }
-function isUnlocked(w,i){ if(state.unlockedAll||i===0) return true; return wstate(WORLDS[i-1].id).stars>=w.unlockStars; }
+function isUnlocked(w,i){ if(state.unlockedAll||i===0) return true; return wstate(WORLDS[i-1].id).lvl>=1; }
 
 /* ================= HELPERS ================= */
 const $=id=>document.getElementById(id);
@@ -354,12 +356,12 @@ function renderHome(){
   const box=$('worlds'); box.innerHTML='';
   WORLDS.forEach((w,i)=>{
     const ws=wstate(w.id), words=worldWords(w), unlocked=isUnlocked(w,i);
-    const mastered=words.filter(([t])=>wstat(w,t).lvl>=2).length;
+    const done=doneCount(w), need=needCount(w);
     const b=document.createElement('button'); b.className='world'+(unlocked?'':' locked');
     b.innerHTML=`<div class="em">${w.emoji}</div><div class="info"><div class="name">${w.name}</div>
-      <div class="sub"><span>⭐ ${ws.stars}</span><span>🎀 ${ws.stickers.length}</span>${unlocked?'':`<span>needs ⭐ ${w.unlockStars}</span>`}</div>
-      <div class="bar"><i style="width:${Math.round(100*mastered/words.length)}%"></i></div></div>${unlocked?'<div class="go">▶️</div>':''}`;
-    b.onclick=()=>{ if(!unlocked){ sfx.wrong(); b.classList.add('wrong'); setTimeout(()=>b.classList.remove('wrong'),400); speak('Collect more stars first!'); return; } startRound(w); };
+      <div class="sub"><span>Level ${ws.lvl+1}</span><span>📝 ${Math.min(done,need)}/${need}</span><span>⭐ ${ws.stars}</span>${unlocked?'':`<span>🔒 finish ${WORLDS[i-1].emoji} level 1</span>`}</div>
+      <div class="bar"><i style="width:${Math.round(100*Math.min(done,need)/need)}%"></i></div></div>${unlocked?'<div class="go">▶️</div>':''}`;
+    b.onclick=()=>{ if(!unlocked){ sfx.wrong(); b.classList.add('wrong'); setTimeout(()=>b.classList.remove('wrong'),400); speak('Finish the words in '+WORLDS[i-1].name+' first!'); return; } startRound(w); };
     box.appendChild(b);
   });
   $('totalStars').textContent=totalStars();
@@ -370,7 +372,7 @@ function renderHome(){
 let G=null; // current round
 function chooseRound(w){
   const ws=wstate(w.id), words=worldWords(w);
-  const weighted=words.map(([t,e])=>{ const s=wstat(w,t); let wt=1+(3-Math.min(s.lvl,3))*2; if(s.miss>0&&s.streak<2) wt+=4; if(s.seen===0) wt+=2; if((ws.lastRound||[]).includes(t)) wt*=0.35; return {t,e,wt}; });
+  const weighted=words.map(([t,e])=>{ const s=wstat(w,t); let wt=1; if(!isDone(w,t)) wt+=8; if(s.miss>0&&s.streak<2) wt+=3; if(s.seen===0) wt+=2; if((ws.lastRound||[]).includes(t)) wt*=0.35; return {t,e,wt}; });
   const out=[]; const pool=weighted.slice();
   while(out.length<Math.min(ROUND_LEN,pool.length)){ const sum=pool.reduce((a,x)=>a+x.wt,0); let r=Math.random()*sum; let idx=0; for(;idx<pool.length;idx++){ r-=pool[idx].wt; if(r<=0) break; } idx=Math.min(idx,pool.length-1); out.push(pool[idx]); pool.splice(idx,1); }
   return out;
@@ -405,7 +407,7 @@ function buildTray(tokens,tier,sentence){
 function nextItem(){
   if(!G) return;
   if(G.i>=G.items.length) return endRound();
-  const it=G.items[G.i], s=wstat(G.w,it.t), tier=Math.min(s.lvl,3);
+  const it=G.items[G.i], tier=Math.min(wstate(G.w.id).lvl,3);
   G.cur={text:it.t, emoji:it.e, tokens:tokensOf(it.t,G.sentence), pos:0, mistakes:0, wrongHere:0, tier};
   renderDots();
   const pic=$('picture'); pic.classList.remove('pop'); void pic.offsetWidth; pic.classList.add('pop'); $('pic').textContent=it.e;
@@ -442,9 +444,10 @@ function wordDone(){
   const stars=c.mistakes===0?3:c.mistakes<=2?2:1;
   G.stars+=stars; $('roundStars').textContent=G.stars;
   // update mastery
-  const s=wstat(G.w,c.text); s.seen++;
-  if(c.mistakes===0){ s.streak++; if(s.streak>=2 && s.lvl<3){ s.lvl++; s.streak=0; } } else { s.streak=0; s.miss++; if(c.mistakes>=3&&s.lvl>0) s.lvl--; }
-  wstate(G.w.id).stars+=stars; save();
+  const s=wstat(G.w,c.text), ws=wstate(G.w.id); s.seen++;
+  if(c.mistakes===0) s.streak++; else { s.streak=0; s.miss++; }
+  if(stars>=2 && s.best<ws.lvl) s.best=ws.lvl;
+  ws.stars+=stars; save();
   // speak
   if(G.sentence){ speak(c.text,{rate:0.85}); }
   else if(state.settings.spell){ speak(c.tokens.map(t=>t.toUpperCase()).join('. ')+'.',{rate:0.7}); speak(c.text+'!',{rate:0.8,cancel:false}); }
@@ -458,10 +461,12 @@ function endRound(){
   const ws=wstate(G.w.id); ws.rounds++; ws.lastRound=G.items.map(x=>x.t);
   const owned=new Set(ws.stickers); const fresh=G.w.stickers.filter(s=>!owned.has(s)); const sticker=fresh.length?fresh[0]:pick(G.w.stickers);
   if(fresh.length) ws.stickers.push(sticker);
+  let levelUp=false; if(doneCount(G.w)>=needCount(G.w) && ws.lvl<3){ ws.lvl++; levelUp=true; }
   save();
-  $('bigsticker').textContent=sticker; $('rewardStars').textContent=G.stars;
-  $('rewardTitle').textContent=fresh.length?'You got a sticker!':'Amazing!';
-  show('reward'); sfx.sticker(); confetti(70); speak(fresh.length?'Wonderful! You got a new sticker!':'Amazing! You are a word princess!');
+  $('bigsticker').textContent=levelUp?'🏆':sticker; $('rewardStars').textContent=G.stars;
+  $('rewardTitle').textContent=levelUp?`Level ${ws.lvl+1}!`:fresh.length?'You got a sticker!':'Amazing!';
+  show('reward'); sfx.sticker(); confetti(70);
+  speak(levelUp?`Level up! Welcome to level ${ws.lvl+1}!`:fresh.length?'Wonderful! You got a new sticker!':'Amazing! You are a word princess!');
 }
 
 /* ================= STICKER BOOK ================= */
@@ -473,9 +478,10 @@ function renderBook(){
 /* ================= PARENT PANEL ================= */
 function fillVoiceSelect(){ const sel=$('voiceSelect'); if(!sel) return; sel.innerHTML='<option value="">אוטומטי</option>'+voices.map(v=>`<option value="${v.name}" ${state.settings.voice===v.name?'selected':''}>${v.name} (${v.lang})</option>`).join(''); }
 function renderParent(){
-  const t=$('statsTable'); t.innerHTML='<tr><th>עולם</th><th>⭐</th><th>מדבקות</th><th>רמות המילים</th></tr>';
-  WORLDS.forEach(w=>{ const ws=wstate(w.id); const lv=worldWords(w).map(([x])=>wstat(w,x).lvl); const avg=lv.length?(lv.reduce((a,b)=>a+b,0)/lv.length+1).toFixed(1):'-';
-    t.innerHTML+=`<tr><td>${w.emoji} ${w.name}</td><td>${ws.stars}</td><td>${ws.stickers.length}/${w.stickers.length}</td><td>ממוצע ${avg}</td></tr>`; });
+  const t=$('statsTable'); t.innerHTML='<tr><th>עולם</th><th>רמה</th><th>מילים ברמה</th><th>⭐</th><th>מדבקות</th></tr>';
+  WORLDS.forEach(w=>{ const ws=wstate(w.id);
+    t.innerHTML+=`<tr><td>${w.emoji} ${w.name}</td><td><select data-world="${w.id}" class="lvlsel">${[0,1,2,3].map(l=>`<option value="${l}" ${ws.lvl===l?'selected':''}>${l+1}</option>`).join('')}</select></td><td>${doneCount(w)}/${needCount(w)}</td><td>${ws.stars}</td><td>${ws.stickers.length}/${w.stickers.length}</td></tr>`; });
+  t.querySelectorAll('.lvlsel').forEach(sel=>sel.onchange=()=>{ wstate(sel.dataset.world).lvl=+sel.value; save(); renderParent(); });
   const hard=[]; WORLDS.forEach(w=>worldWords(w).forEach(([x])=>{ const s=wstat(w,x); if(s.miss>0&&s.streak<2) hard.push(`${x} (${s.miss})`); }));
   $('hardWords').innerHTML=hard.length?hard.map(h=>`<span class="chip">${h}</span>`).join(''):'<span class="note">עדיין אין. כל הכבוד!</span>';
   $('upperSwitch').classList.toggle('on',state.settings.upper);
@@ -483,7 +489,6 @@ function renderParent(){
   $('customWorld').innerHTML=WORLDS.map(w=>`<option value="${w.id}">${w.emoji} ${w.name}</option>`).join('');
   $('customList').innerHTML=state.custom.map((c,i)=>`<span class="chip">${c.emoji} ${c.word} <button data-i="${i}">✕</button></span>`).join('');
   $('customList').querySelectorAll('button').forEach(b=>b.onclick=()=>{ state.custom.splice(+b.dataset.i,1); save(); renderParent(); });
-  $('startLvl').value=String(state.settings.startLvl);
   fillVoiceSelect(); renderDiag();
 }
 
@@ -506,8 +511,6 @@ $('parentClose').onclick=()=>{ renderHome(); show('home'); };
 $('upperSwitch').onclick=()=>{ state.settings.upper=!state.settings.upper; save(); renderParent(); };
 $('spellSwitch').onclick=()=>{ state.settings.spell=!state.settings.spell; save(); renderParent(); };
 $('voiceSelect').onchange=e=>{ state.settings.voice=e.target.value; save(); };
-$('startLvl').onchange=e=>{ state.settings.startLvl=+e.target.value; save(); };
-$('applyLvl').onclick=()=>{ Object.values(state.words).forEach(w=>{ w.lvl=Math.max(w.lvl,state.settings.startLvl); }); save(); renderParent(); alert('בוצע'); };
 function renderDiag(){ const d=$('speechDiag'); if(!d) return; let v=0; try{ v=speechSynthesis.getVoices().length; }catch(e){}
   d.textContent=!speechLog.supported?'❌ הדפדפן הזה לא תומך בדיבור. נסי לפתוח את המשחק ב-Safari (אייפון) או ב-Chrome (אנדרואיד).':`מנוע דיבור: זמין · קולות במכשיר: ${v} · קולות באנגלית: ${voices.length} · הושמעו: ${speechLog.spoken}`+(speechLog.errors.length?` · שגיאות: ${speechLog.errors.join(', ')}`:''); }
 $('testVoice').onclick=()=>{ speak('Hello princess! C. A. T. Cat!'); setTimeout(renderDiag,1500); };
