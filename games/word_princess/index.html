@@ -136,7 +136,32 @@ button:active{transform:scale(.95)}
 
 /* ---------- STICKER BOOK ---------- */
 #book{align-items:center;overflow-y:auto}
-.bookgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;width:100%;max-width:440px;margin-top:14px}
+.shopPill{background:linear-gradient(90deg,#ffe27a,#ff8fc4);color:#5a2a5e}
+#shop{padding-bottom:0}
+.shoptop{display:flex;align-items:center;justify-content:space-between}
+.shopstage{display:flex;justify-content:center;align-items:center;flex:0 0 auto;margin:4px 0}
+.shopPrincess{width:min(50vw,210px);background:radial-gradient(ellipse at 50% 42%,rgba(255,255,255,.85),rgba(255,255,255,.3) 48%,rgba(255,255,255,0) 68%)}
+.princess{width:100%;height:auto;display:block;filter:drop-shadow(0 10px 14px rgba(170,60,130,.25))}
+.princess.big{animation:hover 3.2s ease-in-out infinite}
+.tabs{display:flex;gap:8px;overflow-x:auto;padding:8px 2px;flex:0 0 auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:1px;background:var(--card);border-radius:18px;padding:8px 12px;font-size:22px;box-shadow:var(--shadow);border:3px solid transparent}
+.tab small{font-size:11px;font-weight:700;color:var(--ink-soft)}
+.tab.on{border-color:var(--pink-deep);background:#fff}
+.items{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;overflow-y:auto;flex:1;min-height:0;padding:4px 2px 16px}
+.item{background:var(--card);border-radius:20px;padding:8px 6px;display:flex;flex-direction:column;align-items:center;gap:4px;box-shadow:var(--shadow);border:3px solid transparent;position:relative}
+.item .pv{width:100%;aspect-ratio:3/4;overflow:hidden;display:flex;align-items:flex-start;justify-content:center}
+.item .pv .princess{width:100%;height:100%;filter:none}
+.item .iname{font-size:13px;font-weight:700;line-height:1.1;text-align:center}
+.item .iprice{font-size:14px;font-weight:700;color:var(--pink-deep);background:#fff;border-radius:999px;padding:3px 10px}
+.item.wearing{border-color:var(--mint);background:#f0fff9}
+.item.owned .iprice{color:#1f8a6a}
+.item.cant{opacity:.6}
+.item.cant .iprice{color:var(--ink-soft)}
+.item.can::after{content:'🛒';position:absolute;top:4px;right:6px;font-size:16px}
+.item.wrong{animation:shake .4s}
+.bigsticker .princess{width:170px}
+.bookgrid{display:none}
 .sticker{aspect-ratio:1;background:var(--card);border-radius:22px;display:grid;place-items:center;font-size:44px;box-shadow:var(--shadow)}
 .sticker.empty{opacity:.35;font-size:30px}
 .booktitle{display:flex;align-items:center;width:100%;max-width:440px;justify-content:space-between}
@@ -178,8 +203,8 @@ button:active{transform:scale(.95)}
   </div>
   <div class="worlds" id="worlds"></div>
   <div class="home-foot">
-    <button class="pill" id="bookBtn">📖 Stickers <span id="stickerCount">0</span></button>
     <button class="pill" id="starsPill">⭐ <span id="totalStars">0</span></button>
+    <button class="pill shopPill" id="shopBtn">🛍️ Princess Shop</button>
   </div>
 </div>
 
@@ -203,19 +228,27 @@ button:active{transform:scale(.95)}
 
 <!-- REWARD -->
 <div class="screen" id="reward">
-  <div class="bigsticker" id="bigsticker">🦄</div>
-  <h2 id="rewardTitle">You got a sticker!</h2>
+  <div class="bigsticker" id="bigsticker"></div>
+  <h2 id="rewardTitle">Amazing!</h2>
   <div class="pill" style="font-size:22px"><span id="rewardStars">⭐ 0</span></div>
+  <div class="pill" style="font-size:18px">💰 <span id="rewardWallet">0</span> stars to spend</div>
   <div class="rewardbtns">
-    <button class="bigbtn primary" id="againBtn">▶️ Again!</button>
+    <button class="bigbtn primary" id="shopFromReward">🛍️ Shop</button>
+    <button class="bigbtn" id="againBtn">▶️ Again</button>
     <button class="bigbtn" id="homeBtn">🏠</button>
   </div>
 </div>
 
-<!-- STICKER BOOK -->
-<div class="screen" id="book">
-  <div class="booktitle"><button class="iconbtn" id="bookBack">🏠</button><h2>📖 My Stickers</h2><span style="width:46px"></span></div>
-  <div class="bookgrid" id="bookgrid"></div>
+<!-- PRINCESS SHOP / CLOSET -->
+<div class="screen" id="shop">
+  <div class="shoptop">
+    <button class="iconbtn" id="shopBack">🏠</button>
+    <div class="round">💰 <span id="shopWallet">0</span></div>
+    <span style="width:46px"></span>
+  </div>
+  <div class="shopstage"><div class="shopPrincess" id="shopPrincess"></div></div>
+  <div class="tabs" id="shopTabs"></div>
+  <div class="items" id="shopItems"></div>
 </div>
 
 <!-- PARENT PANEL -->
@@ -229,6 +262,12 @@ button:active{transform:scale(.95)}
     <h3>התקדמות</h3>
     <table id="statsTable"></table>
     <p class="note">לכל עולם יש רמה אחת לכל המילים שלו: 1 = המילה כתובה מתחת לתמונה, 2 = המילה כתובה אבל מטושטשת, 3 = רק תמונה וקול (לחיצה על התמונה מציצה במילה במחיר כוכב), 4 = רק תמונה וקול עם יותר אותיות מבלבלות. בכל רמה יש כ-10 אותיות לבחירה. העולם עולה רמה כשכמעט כל המילים שלו (11 מתוך 12) אויתו ברמה הזאת עם 2 כוכבים לפחות. אפשר לשנות רמה ידנית בטבלה. עולם חדש נפתח כשהעולם הקודם סיים את רמה 1.</p>
+  </section>
+
+  <section>
+    <h3>חנות הנסיכה</h3>
+    <p class="note" id="shopNote"></p>
+    <button class="pbtn ghost" id="bonusStars">🎁 בונוס של 30 כוכבים</button>
   </section>
 
   <section>
@@ -302,7 +341,7 @@ const WORLDS = [
 const DIGRAPHS=['sh','ch','th','ee','oo'];
 const WORLD_BG={castle:'linear-gradient(145deg,#ffd1e8,#d9c6ff)',meadow:'linear-gradient(145deg,#c9f7e6,#bfe3ff)',icecream:'linear-gradient(145deg,#ffe0c2,#ffc2dc)',families:'linear-gradient(145deg,#fff1b8,#c9f7e6 50%,#d9c6ff)',sounds:'linear-gradient(145deg,#fff3c4,#ffc2dc)',forest:'linear-gradient(145deg,#e3d4ff,#c9f7e6)',lagoon:'linear-gradient(145deg,#bff5f0,#bfe3ff)',challenge:'linear-gradient(145deg,#fff2b3,#ffd8a8)'};
 const IMG_FOR={'I am hot':'hot_face','I am cold':'cold_face','I see mom':'woman','I like cake':'cake','I like milk':'milk','I can run':'runner','I like pink':'pink_heart','I see a dog':'dog','The sun is hot':'sun_face','I see a star':'star','The pig is pink':'pig','I like ice cream':'icecream'};
-const IMG_SET=new Set(["ant", "bag", "bat", "bath", "bear", "bed", "bee", "bell", "bird", "book", "boot", "box", "bus", "cake", "car", "cat", "chair", "cheese", "chick", "cold_face", "cow", "crown", "cup", "dog", "duck", "ear", "ear_icon", "egg", "eye", "fish", "fox", "frog", "hat", "hen", "hot_face", "icecream", "key", "kite", "lion", "log", "man", "milk", "moon", "owl", "pan", "pen", "pig", "pink_heart", "ring", "runner", "sea", "sheep", "shell", "ship", "sock", "spoon", "star", "sun", "sun_face", "ten", "three", "tooth", "tree", "trophy", "van", "woman", "world_castle", "world_challenge", "world_families", "world_forest", "world_icecream", "world_lagoon", "world_meadow", "world_sounds"]);
+const IMG_SET=new Set(["ant", "bag", "bat", "bath", "bear", "bed", "bee", "bell", "bird", "book", "boot", "box", "bus", "cake", "car", "cat", "chair", "cheese", "chick", "cold_face", "cow", "crown", "cup", "dog", "duck", "ear", "ear_icon", "egg", "eye", "fish", "fox", "frog", "hat", "hen", "hot_face", "icecream", "key", "kite", "lion", "log", "man", "milk", "moon", "owl", "pan", "pen", "pet_bunny", "pet_butterfly", "pet_cat", "pet_dog", "pet_hamster", "pet_unicorn", "pig", "pink_heart", "ring", "runner", "sea", "sheep", "shell", "ship", "sock", "spoon", "star", "sun", "sun_face", "ten", "three", "tooth", "tree", "trophy", "van", "woman", "world_castle", "world_challenge", "world_families", "world_forest", "world_icecream", "world_lagoon", "world_meadow", "world_sounds"]);
 function worldIcon(id,emoji){ return IMG_SET.has('world_'+id)?`<img src="img/world_${id}.png" alt="">`:emoji; }
 function imgFor(text){ const k=IMG_FOR[text]||text.toLowerCase(); return IMG_SET.has(k)?'img/'+k+'.png':null; }
 const CHALLENGE_LEN=10;
@@ -327,7 +366,7 @@ function isDone(w,text){ return wstat(w,text).best>=wstate(w.id).lvl; }
 function doneCount(w){ return worldWords(w).filter(([t])=>isDone(w,t)).length; }
 function needCount(w){ const n=worldWords(w).length; return Math.max(Math.min(10,n), n-1); }
 function worldWords(w){ return w.words.concat(state.custom.filter(c=>c.world===w.id).map(c=>[c.word,c.emoji])); }
-function totalStars(){ return WORLDS.reduce((a,w)=>a+wstate(w.id).stars,0); }
+function totalStars(){ return Object.values(state.worlds).reduce((a,ws)=>a+(ws.stars||0),0); }
 function requiresOf(w,i){ return w.requires || (i>0?[WORLDS[i-1].id]:[]); }
 function isUnlocked(w,i){ if(state.unlockedAll||i===0) return true; return requiresOf(w,i).every(id=>wstate(id).lvl>=1); }
 
@@ -391,7 +430,7 @@ function speak(text,{rate=0.85,pitch=1.15,cancel=true}={}){
 /* Safari sometimes wedges in the "speaking" state; unstick it. */
 setInterval(()=>{ try{ if(speechLog.supported && speechSynthesis.paused) speechSynthesis.resume(); }catch(e){} },3000);
 /* ---- bundled voice clips (audio/*.mp3), played through Web Audio; the phone's own voice is only a fallback ---- */
-const CLIPS=new Set(["l_a", "l_b", "l_c", "l_d", "l_e", "l_f", "l_g", "l_h", "l_i", "l_j", "l_k", "l_l", "l_m", "l_n", "l_o", "l_p", "l_q", "l_r", "l_s", "l_t", "l_u", "l_v", "l_w", "l_x", "l_y", "l_z", "p_amazing", "p_challenge", "p_champion", "p_families", "p_finish", "p_great", "p_hello", "p_level2", "p_level3", "p_level4", "p_listen", "p_sentences", "p_sounds", "p_spell", "p_sticker", "w_a", "w_am", "w_ant", "w_bag", "w_bat", "w_bath", "w_bear", "w_bed", "w_bee", "w_bell", "w_big", "w_bird", "w_book", "w_boot", "w_box", "w_bus", "w_cake", "w_can", "w_car", "w_cat", "w_chair", "w_cheese", "w_chick", "w_cold", "w_cow", "w_cream", "w_cup", "w_dog", "w_duck", "w_ear", "w_egg", "w_eye", "w_fish", "w_fox", "w_frog", "w_hat", "w_hen", "w_hot", "w_i", "w_i_am_cold", "w_i_am_hot", "w_i_can_run", "w_i_like_cake", "w_i_like_ice_cream", "w_i_like_milk", "w_i_like_pink", "w_i_see_a_dog", "w_i_see_a_star", "w_i_see_mom", "w_ice", "w_is", "w_key", "w_kite", "w_like", "w_lion", "w_log", "w_man", "w_milk", "w_mom", "w_moon", "w_owl", "w_pan", "w_pen", "w_pig", "w_pink", "w_ring", "w_run", "w_sea", "w_see", "w_sheep", "w_shell", "w_ship", "w_sock", "w_spoon", "w_star", "w_sun", "w_ten", "w_the", "w_the_pig_is_pink", "w_the_sun_is_hot", "w_three", "w_tooth", "w_tree", "w_van"]);
+const CLIPS=new Set(["l_a", "l_b", "l_c", "l_d", "l_e", "l_f", "l_g", "l_h", "l_i", "l_j", "l_k", "l_l", "l_m", "l_n", "l_o", "l_p", "l_q", "l_r", "l_s", "l_t", "l_u", "l_v", "l_w", "l_x", "l_y", "l_z", "p_amazing", "p_buy", "p_challenge", "p_champion", "p_families", "p_finish", "p_great", "p_hello", "p_level2", "p_level3", "p_level4", "p_listen", "p_need", "p_sentences", "p_shop", "p_sounds", "p_spell", "p_stars", "p_sticker", "w_a", "w_am", "w_ant", "w_bag", "w_bat", "w_bath", "w_bear", "w_bed", "w_bee", "w_bell", "w_big", "w_bird", "w_book", "w_boot", "w_box", "w_bus", "w_cake", "w_can", "w_car", "w_cat", "w_chair", "w_cheese", "w_chick", "w_cold", "w_cow", "w_cream", "w_cup", "w_dog", "w_duck", "w_ear", "w_egg", "w_eye", "w_fish", "w_fox", "w_frog", "w_hat", "w_hen", "w_hot", "w_i", "w_i_am_cold", "w_i_am_hot", "w_i_can_run", "w_i_like_cake", "w_i_like_ice_cream", "w_i_like_milk", "w_i_like_pink", "w_i_see_a_dog", "w_i_see_a_star", "w_i_see_mom", "w_ice", "w_is", "w_key", "w_kite", "w_like", "w_lion", "w_log", "w_man", "w_milk", "w_mom", "w_moon", "w_owl", "w_pan", "w_pen", "w_pig", "w_pink", "w_ring", "w_run", "w_sea", "w_see", "w_sheep", "w_shell", "w_ship", "w_sock", "w_spoon", "w_star", "w_sun", "w_ten", "w_the", "w_the_pig_is_pink", "w_the_sun_is_hot", "w_three", "w_tooth", "w_tree", "w_van"]);
 const clipCache={}; let playing=[], playGen=0; const clipLog={loaded:0, errors:[]};
 function clipKey(text){ return 'w_'+text.toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,''); }
 function ensureCtx(){ actx = actx || new (window.AudioContext||window.webkitAudioContext)(); if(actx.state==='suspended') actx.resume(); return actx; }
@@ -446,8 +485,7 @@ function renderHome(){
     b.onclick=()=>{ if(!unlocked){ sfx.wrong(); b.classList.add('wrong'); setTimeout(()=>b.classList.remove('wrong'),400); sayPhrase('p_finish','Finish the other world first!'); return; } startRound(w); };
     box.appendChild(b);
   });
-  $('totalStars').textContent=totalStars();
-  $('stickerCount').textContent=WORLDS.reduce((a,w)=>a+wstate(w.id).stickers.length,0);
+  $('totalStars').textContent=wallet();
 }
 
 /* ================= GAME ================= */
@@ -563,34 +601,149 @@ function endRound(){
   if(G.w.challenge){
     const secs=Math.max(1,Math.round((Date.now()-G.t0)/1000)); const ch=state.challenge||(state.challenge={best:0,runs:0});
     ch.runs++; const record=!ch.best||secs<ch.best; if(record) ch.best=secs; save();
-    $('bigsticker').innerHTML='<img src="img/trophy.png" alt="">'; $('rewardStars').textContent=`⏱ ${secs}s · ⭐ ${G.stars}`;
+    $('bigsticker').innerHTML='<img src="img/trophy.png" alt="">'; $('rewardStars').textContent=`⏱ ${secs}s · +${G.stars} ⭐`; $('rewardWallet').textContent=wallet();
     $('rewardTitle').textContent=record?'New record! Princess Champion!':'Princess Champion!';
     show('reward'); sfx.sticker(); confetti(90); sayPhrase('p_champion','You did it! You are a princess champion!'); return;
   }
   const ws=wstate(G.w.id); ws.rounds++; ws.lastRound=G.items.map(x=>x.t);
-  const owned=new Set(ws.stickers); const fresh=G.w.stickers.filter(s=>!owned.has(s)); const sticker=fresh.length?fresh[0]:pick(G.w.stickers);
-  if(fresh.length) ws.stickers.push(sticker);
   let levelUp=false; if(doneCount(G.w)>=needCount(G.w) && ws.lvl<3){ ws.lvl++; levelUp=true; }
   save();
-  if(levelUp) $('bigsticker').innerHTML='<img src="img/trophy.png" alt="">'; else $('bigsticker').textContent=sticker;
-  $('rewardStars').textContent='⭐ '+G.stars;
-  $('rewardTitle').textContent=levelUp?`Level ${ws.lvl+1}!`:fresh.length?'You got a sticker!':'Amazing!';
+  $('bigsticker').innerHTML=levelUp?'<img src="img/trophy.png" alt="">':princessSVG(shopState().equipped,'big');
+  $('rewardStars').textContent='+'+G.stars+' ⭐'; $('rewardWallet').textContent=wallet();
+  $('rewardTitle').textContent=levelUp?`Level ${ws.lvl+1}!`:'You earned stars!';
   show('reward'); sfx.sticker(); confetti(70);
-  if(levelUp) sayPhrase('p_level'+(ws.lvl+1),`Level up! Welcome to level ${ws.lvl+1}!`); else if(fresh.length) sayPhrase('p_sticker','Wonderful! You got a new sticker!'); else sayPhrase('p_amazing','Amazing! You are a word princess!');
+  if(levelUp) sayPhrase('p_level'+(ws.lvl+1),`Level up! Welcome to level ${ws.lvl+1}!`); else sayPhrase('p_stars',"Great job! You earned stars! Let's dress up the princess!");
 }
 
-/* ================= STICKER BOOK ================= */
-function renderBook(){
-  const g=$('bookgrid'); g.innerHTML='';
-  WORLDS.forEach(w=>{ const ws=wstate(w.id); w.stickers.forEach(s=>{ const d=document.createElement('div'); const got=ws.stickers.includes(s); d.className='sticker'+(got?'':' empty'); d.textContent=got?s:'❔'; g.appendChild(d); }); });
+/* ================= PRINCESS + SHOP ================= */
+const SKIN='#f8cfae', SKIN_D='#e9b48f';
+function starPts(cx,cy,r1,r2,n=5){ let p=[]; for(let i=0;i<n*2;i++){ const r=i%2?r2:r1, a=-Math.PI/2+i*Math.PI/n; p.push((cx+r*Math.cos(a)).toFixed(1)+','+(cy+r*Math.sin(a)).toFixed(1)); } return p.join(' '); }
+function dressSVG(c1,c2,style,extra=''){
+  const bod=`<path d="M92 150 Q120 140 148 150 L142 198 L98 198 Z" fill="${c1}"/>`;
+  const sleeves=`<circle cx="88" cy="154" r="13" fill="${c1}"/><circle cx="152" cy="154" r="13" fill="${c1}"/>`;
+  let skirt='';
+  if(style==='ball') skirt=`<path d="M98 198 L142 198 Q206 236 200 292 L40 292 Q34 236 98 198 Z" fill="${c1}"/><path d="M120 198 Q150 250 158 292 L82 292 Q90 250 120 198 Z" fill="${c2}" opacity=".75"/>`;
+  else if(style==='mermaid') skirt=`<path d="M98 198 L142 198 L150 252 Q120 266 90 252 Z" fill="${c1}"/><path d="M90 252 Q120 266 150 252 L178 292 L62 292 Z" fill="${c2}"/>`;
+  else skirt=`<path d="M98 198 L142 198 L180 292 L60 292 Z" fill="${c1}"/><path d="M120 198 L152 292 L88 292 Z" fill="${c2}" opacity=".7"/>`;
+  return bod+sleeves+skirt+`<path d="M98 198 Q120 206 142 198" stroke="${c2}" stroke-width="4" fill="none"/>`+extra;
 }
+const SPARKS=(c='#fff')=>[[80,250],[150,230],[110,275],[165,278],[70,215]].map(([x,y])=>`<polygon points="${starPts(x,y,5,2)}" fill="${c}" opacity=".9"/>`).join('');
+const ITEMS=[
+  // hair colours
+  {id:'hair_brown',slot:'hair',name:'Brown Hair',price:0,color:'#6b3e2e'},
+  {id:'hair_blonde',slot:'hair',name:'Golden Hair',price:15,color:'#f2c85b'},
+  {id:'hair_black',slot:'hair',name:'Black Hair',price:15,color:'#2c2238'},
+  {id:'hair_red',slot:'hair',name:'Red Hair',price:20,color:'#d1552c'},
+  {id:'hair_pink',slot:'hair',name:'Pink Hair',price:30,color:'#ff7fc0'},
+  {id:'hair_purple',slot:'hair',name:'Purple Hair',price:30,color:'#9a6cff'},
+  // dresses
+  {id:'dress_simple',slot:'dress',name:'Simple Dress',price:0,svg:dressSVG('#ffd6e8','#ffb3d1','aline')},
+  {id:'dress_rose',slot:'dress',name:'Rose Gown',price:30,svg:dressSVG('#ff6fb1','#ffb3d1','ball')},
+  {id:'dress_sky',slot:'dress',name:'Sky Gown',price:40,svg:dressSVG('#7fc8ff','#cfeaff','ball')},
+  {id:'dress_mint',slot:'dress',name:'Mint Dress',price:45,svg:dressSVG('#7ee8c6','#c9f7e6','aline')},
+  {id:'dress_lilac',slot:'dress',name:'Lilac Mermaid',price:60,svg:dressSVG('#b78cff','#e3d4ff','mermaid')},
+  {id:'dress_sun',slot:'dress',name:'Sunshine Dress',price:55,svg:dressSVG('#ffd84d','#fff1b8','aline')},
+  {id:'dress_gold',slot:'dress',name:'Golden Gown',price:90,svg:dressSVG('#f4b63a','#ffe27a','ball',SPARKS('#fff6c8'))},
+  {id:'dress_rainbow',slot:'dress',name:'Rainbow Gown',price:120,svg:dressSVG('url(#rainbow)','rgba(255,255,255,.35)','ball',SPARKS())},
+  {id:'dress_night',slot:'dress',name:'Starry Night',price:110,svg:dressSVG('#3b2a7a','#7b5cff','mermaid',SPARKS('#ffe27a'))},
+  // shoes
+  {id:'shoes_pink',slot:'shoes',name:'Pink Flats',price:15,svg:`<ellipse cx="104" cy="295" rx="15" ry="7" fill="#ff8fc4"/><ellipse cx="136" cy="295" rx="15" ry="7" fill="#ff8fc4"/>`},
+  {id:'shoes_red',slot:'shoes',name:'Red Shoes',price:25,svg:`<ellipse cx="104" cy="295" rx="15" ry="7" fill="#e8334f"/><ellipse cx="136" cy="295" rx="15" ry="7" fill="#e8334f"/><circle cx="104" cy="290" r="3" fill="#fff"/><circle cx="136" cy="290" r="3" fill="#fff"/>`},
+  {id:'shoes_glass',slot:'shoes',name:'Glass Slippers',price:35,svg:`<ellipse cx="104" cy="295" rx="15" ry="7" fill="#cfeeff" stroke="#8fd3ff" stroke-width="2"/><ellipse cx="136" cy="295" rx="15" ry="7" fill="#cfeeff" stroke="#8fd3ff" stroke-width="2"/><ellipse cx="100" cy="292" rx="5" ry="2" fill="#fff"/><ellipse cx="132" cy="292" rx="5" ry="2" fill="#fff"/>`},
+  {id:'shoes_gold',slot:'shoes',name:'Golden Heels',price:50,svg:`<ellipse cx="104" cy="295" rx="15" ry="7" fill="#f4b63a"/><ellipse cx="136" cy="295" rx="15" ry="7" fill="#f4b63a"/><polygon points="${starPts(104,293,5,2)}" fill="#fff6c8"/><polygon points="${starPts(136,293,5,2)}" fill="#fff6c8"/>`},
+  {id:'shoes_boots',slot:'shoes',name:'Purple Boots',price:40,svg:`<rect x="90" y="276" width="28" height="22" rx="8" fill="#9a6cff"/><rect x="122" y="276" width="28" height="22" rx="8" fill="#9a6cff"/><rect x="90" y="276" width="28" height="6" fill="#e3d4ff"/><rect x="122" y="276" width="28" height="6" fill="#e3d4ff"/>`},
+  // head
+  {id:'head_silver',slot:'head',name:'Silver Tiara',price:25,svg:`<path d="M90 60 L100 42 L110 56 L120 36 L130 56 L140 42 L150 60 Z" fill="#dfe6f2" stroke="#b9c6dd" stroke-width="2"/><circle cx="120" cy="44" r="4" fill="#ff8fc4"/>`},
+  {id:'head_flower',slot:'head',name:'Flower Crown',price:35,svg:[88,100,112,124,136,148].map((x,i)=>`<circle cx="${x}" cy="${52+Math.abs(i-2.5)*3}" r="7" fill="${['#ff8fc4','#ffe27a','#9ef0d9','#ff8fc4','#ffe27a','#b78cff'][i]}"/><circle cx="${x}" cy="${52+Math.abs(i-2.5)*3}" r="2.5" fill="#fff"/>`).join('')},
+  {id:'head_bow',slot:'head',name:'Pink Bow',price:15,svg:`<ellipse cx="146" cy="52" rx="12" ry="8" fill="#ff5fa8" transform="rotate(-20 146 52)"/><ellipse cx="166" cy="56" rx="12" ry="8" fill="#ff5fa8" transform="rotate(20 166 56)"/><circle cx="156" cy="55" r="5" fill="#ff8fc4"/>`},
+  {id:'head_gold',slot:'head',name:'Gold Crown',price:50,svg:`<path d="M88 62 L92 38 L106 52 L120 30 L134 52 L148 38 L152 62 Z" fill="#f4b63a" stroke="#d99a1e" stroke-width="2"/><circle cx="120" cy="40" r="5" fill="#e8334f"/><circle cx="104" cy="50" r="3.5" fill="#3fa9f5"/><circle cx="136" cy="50" r="3.5" fill="#3fa9f5"/>`},
+  {id:'head_diamond',slot:'head',name:'Diamond Tiara',price:80,svg:`<path d="M86 62 L96 40 L108 56 L120 30 L132 56 L144 40 L154 62 Z" fill="#eaf6ff" stroke="#9fd8ff" stroke-width="2"/><polygon points="${starPts(120,42,7,3)}" fill="#7fc8ff"/><circle cx="106" cy="52" r="3" fill="#b78cff"/><circle cx="134" cy="52" r="3" fill="#b78cff"/>`},
+  // earrings
+  {id:'ear_pearl',slot:'earrings',name:'Pearl Earrings',price:20,svg:`<circle cx="74" cy="118" r="4.5" fill="#fff" stroke="#ddd" stroke-width="1"/><circle cx="166" cy="118" r="4.5" fill="#fff" stroke="#ddd" stroke-width="1"/>`},
+  {id:'ear_ruby',slot:'earrings',name:'Ruby Earrings',price:30,svg:`<polygon points="74,111 80,118 74,126 68,118" fill="#e8334f"/><polygon points="166,111 172,118 166,126 160,118" fill="#e8334f"/>`},
+  {id:'ear_star',slot:'earrings',name:'Star Earrings',price:40,svg:`<polygon points="${starPts(74,119,7,3)}" fill="#ffd84d"/><polygon points="${starPts(166,119,7,3)}" fill="#ffd84d"/>`},
+  {id:'ear_heart',slot:'earrings',name:'Heart Earrings',price:35,svg:`<path d="M74 124 L67 116 Q67 110 72 111 Q74 112 74 114 Q74 112 76 111 Q81 110 81 116 Z" fill="#ff5fa8"/><path d="M166 124 L159 116 Q159 110 164 111 Q166 112 166 114 Q166 112 168 111 Q173 110 173 116 Z" fill="#ff5fa8"/>`},
+  // necklaces
+  {id:'neck_heart',slot:'necklace',name:'Heart Necklace',price:25,svg:`<path d="M102 150 Q120 172 138 150" stroke="#f4b63a" stroke-width="2" fill="none"/><path d="M120 176 L112 167 Q112 160 117 161 Q120 162 120 165 Q120 162 123 161 Q128 160 128 167 Z" fill="#ff5fa8"/>`},
+  {id:'neck_pearls',slot:'necklace',name:'Pearl Necklace',price:35,svg:[102,107,112,117,122,127,132,137].map((x,i)=>`<circle cx="${x+0.5}" cy="${150+Math.sin(i/7*Math.PI)*16}" r="3.5" fill="#fff" stroke="#ddd" stroke-width="1"/>`).join('')},
+  {id:'neck_gem',slot:'necklace',name:'Gem Necklace',price:55,svg:`<path d="M102 150 Q120 172 138 150" stroke="#dfe6f2" stroke-width="2.5" fill="none"/><polygon points="120,164 128,172 120,182 112,172" fill="#3fa9f5"/><polygon points="120,166 125,172 120,178 115,172" fill="#cfeeff"/>`},
+  // wands
+  {id:'wand_star',slot:'wand',name:'Star Wand',price:30,svg:`<line x1="172" y1="212" x2="198" y2="150" stroke="#ff8fc4" stroke-width="5" stroke-linecap="round"/><polygon points="${starPts(200,144,13,6)}" fill="#ffd84d"/>`},
+  {id:'wand_heart',slot:'wand',name:'Heart Wand',price:40,svg:`<line x1="172" y1="212" x2="198" y2="150" stroke="#b78cff" stroke-width="5" stroke-linecap="round"/><path d="M200 156 L187 143 Q187 132 196 134 Q200 136 200 140 Q200 136 204 134 Q213 132 213 143 Z" fill="#ff5fa8"/>`},
+  {id:'wand_rainbow',slot:'wand',name:'Rainbow Wand',price:70,svg:`<line x1="172" y1="212" x2="198" y2="150" stroke="url(#rainbow)" stroke-width="6" stroke-linecap="round"/><polygon points="${starPts(200,144,14,6)}" fill="#fff"/><polygon points="${starPts(200,144,8,3)}" fill="#ffd84d"/><polygon points="${starPts(186,166,5,2)}" fill="#fff"/><polygon points="${starPts(214,160,5,2)}" fill="#fff"/>`},
+  // pets
+  {id:'pet_cat',slot:'pet',name:'Kitty',price:60,img:'img/pet_cat.png'},
+  {id:'pet_dog',slot:'pet',name:'Puppy',price:60,img:'img/pet_dog.png'},
+  {id:'pet_bunny',slot:'pet',name:'Bunny',price:70,img:'img/pet_bunny.png'},
+  {id:'pet_hamster',slot:'pet',name:'Hamster',price:50,img:'img/pet_hamster.png'},
+  {id:'pet_butterfly',slot:'pet',name:'Butterfly',price:80,img:'img/pet_butterfly.png'},
+  {id:'pet_unicorn',slot:'pet',name:'Unicorn',price:120,img:'img/pet_unicorn.png'},
+];
+const SLOTS=[['dress','👗','Dresses'],['head','👑','Tiaras'],['shoes','👠','Shoes'],['earrings','💎','Earrings'],['necklace','📿','Necklaces'],['wand','🪄','Wands'],['hair','💇‍♀️','Hair'],['pet','🦄','Pets']];
+const ITEM={}; ITEMS.forEach(i=>ITEM[i.id]=i);
+function shopState(){ return state.shop || (state.shop={owned:['hair_brown','dress_simple'],equipped:{hair:'hair_brown',dress:'dress_simple'},spent:0}); }
+function wallet(){ return totalStars()-shopState().spent; }
+function princessSVG(eq,cls=''){
+  const hair=(ITEM[eq.hair]||ITEM.hair_brown).color, dress=(ITEM[eq.dress]||ITEM.dress_simple).svg;
+  const layer=slot=>{ const it=ITEM[eq[slot]]; return it&&it.svg?it.svg:''; };
+  const pet=ITEM[eq.pet]; const petSVG=pet?`<image href="${pet.img}" x="4" y="222" width="76" height="76"/>`:'';
+  return `<svg class="princess ${cls}" viewBox="0 0 240 320" xmlns="http://www.w3.org/2000/svg">
+  <defs><linearGradient id="rainbow" gradientUnits="userSpaceOnUse" x1="0" y1="140" x2="0" y2="292"><stop offset="0" stop-color="#ff6fb1"/><stop offset=".25" stop-color="#ffd84d"/><stop offset=".5" stop-color="#7ee8c6"/><stop offset=".75" stop-color="#7fc8ff"/><stop offset="1" stop-color="#b78cff"/></linearGradient></defs>
+  <ellipse cx="120" cy="300" rx="90" ry="10" fill="rgba(120,40,100,.12)"/>
+  <path d="M76 84 Q66 170 88 206 L152 206 Q174 170 164 84 Z" fill="${hair}"/>
+  <rect x="111" y="128" width="18" height="22" rx="6" fill="${SKIN_D}"/>
+  <path d="M92 156 Q70 186 72 214" stroke="${SKIN}" stroke-width="13" fill="none" stroke-linecap="round"/>
+  <path d="M148 156 Q170 186 168 214" stroke="${SKIN}" stroke-width="13" fill="none" stroke-linecap="round"/>
+  ${dress}
+  <circle cx="72" cy="216" r="8" fill="${SKIN}"/><circle cx="168" cy="216" r="8" fill="${SKIN}"/>
+  ${layer('shoes')}${layer('necklace')}${layer('wand')}
+  <circle cx="73" cy="104" r="9" fill="${SKIN}"/><circle cx="167" cy="104" r="9" fill="${SKIN}"/>
+  <circle cx="120" cy="92" r="47" fill="${SKIN}"/>
+  <ellipse cx="103" cy="96" rx="7" ry="9.5" fill="#3b2a4a"/><ellipse cx="137" cy="96" rx="7" ry="9.5" fill="#3b2a4a"/>
+  <circle cx="106" cy="92" r="2.8" fill="#fff"/><circle cx="140" cy="92" r="2.8" fill="#fff"/>
+  <path d="M94 84 Q103 78 112 84" stroke="#3b2a4a" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M128 84 Q137 78 146 84" stroke="#3b2a4a" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  <circle cx="92" cy="112" r="7" fill="#ffb3c6" opacity=".7"/><circle cx="148" cy="112" r="7" fill="#ffb3c6" opacity=".7"/>
+  <path d="M108 118 Q120 130 132 118" stroke="#c2456f" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <path d="M73 92 Q76 44 120 44 Q164 44 167 92 Q154 64 128 70 Q110 66 96 74 Q82 80 73 92 Z" fill="${hair}"/>
+  ${layer('earrings')}${layer('head')}
+  ${petSVG}
+  </svg>`;
+}
+let shopTab='dress';
+function renderShop(){
+  const sh=shopState();
+  $('shopPrincess').innerHTML=princessSVG(sh.equipped,'big');
+  $('shopWallet').textContent=wallet();
+  $('shopTabs').innerHTML=SLOTS.map(([id,em,name])=>`<button class="tab ${shopTab===id?'on':''}" data-slot="${id}">${em}<small>${name}</small></button>`).join('');
+  $('shopTabs').querySelectorAll('.tab').forEach(b=>b.onclick=()=>{ shopTab=b.dataset.slot; sfx.tap(); renderShop(); $('shopItems').scrollTop=0; b.scrollIntoView({inline:'center',block:'nearest',behavior:'smooth'}); });
+  const grid=$('shopItems'); grid.innerHTML='';
+  ITEMS.filter(i=>i.slot===shopTab).forEach(it=>{
+    const owned=sh.owned.includes(it.id), wearing=sh.equipped[it.slot]===it.id, can=wallet()>=it.price;
+    const card=document.createElement('button'); card.className='item'+(wearing?' wearing':owned?' owned':can?' can':' cant');
+    const preview=Object.assign({},sh.equipped,{[it.slot]:it.id});
+    card.innerHTML=`<div class="pv">${princessSVG(preview)}</div><div class="iname">${it.name}</div><div class="iprice">${wearing?'✅ Wearing':owned?'👗 Wear':`⭐ ${it.price}`}</div>`;
+    card.onclick=()=>tapItem(it,card);
+    grid.appendChild(card);
+  });
+}
+function tapItem(it,card){
+  const sh=shopState(); const owned=sh.owned.includes(it.id);
+  if(owned){
+    if(sh.equipped[it.slot]===it.id && it.price>0 && !['hair','dress'].includes(it.slot)){ delete sh.equipped[it.slot]; } else sh.equipped[it.slot]=it.id;
+    sfx.tap(); save(); renderShop(); return;
+  }
+  if(wallet()<it.price){ sfx.wrong(); card.classList.add('wrong'); setTimeout(()=>card.classList.remove('wrong'),400); sayPhrase('p_need','You need more stars. Keep spelling!'); return; }
+  sh.spent+=it.price; sh.owned.push(it.id); sh.equipped[it.slot]=it.id; save();
+  sfx.sticker(); confetti(50); sayPhrase('p_buy','Beautiful! She loves it!'); renderShop();
+}
+function openShop(tab){ if(tab) shopTab=tab; renderShop(); show('shop'); sayPhrase('p_shop','Welcome to the princess shop!'); }
 
 /* ================= PARENT PANEL ================= */
 function fillVoiceSelect(){ const sel=$('voiceSelect'); if(!sel) return; sel.innerHTML='<option value="">אוטומטי</option>'+voices.map(v=>`<option value="${v.name}" ${state.settings.voice===v.name?'selected':''}>${v.name} (${v.lang})</option>`).join(''); }
 function renderParent(){
-  const t=$('statsTable'); t.innerHTML='<tr><th>עולם</th><th>רמה</th><th>מילים ברמה</th><th>⭐</th><th>מדבקות</th></tr>';
+  const t=$('statsTable'); t.innerHTML='<tr><th>עולם</th><th>רמה</th><th>מילים ברמה</th><th>⭐ שנצברו</th></tr>';
   WORLDS.forEach(w=>{ const ws=wstate(w.id);
-    t.innerHTML+=`<tr><td>${w.emoji} ${w.name}</td><td><select data-world="${w.id}" class="lvlsel">${[0,1,2,3].map(l=>`<option value="${l}" ${ws.lvl===l?'selected':''}>${l+1}</option>`).join('')}</select></td><td>${doneCount(w)}/${needCount(w)}</td><td>${ws.stars}</td><td>${ws.stickers.length}/${w.stickers.length}</td></tr>`; });
+    t.innerHTML+=`<tr><td>${w.emoji} ${w.name}</td><td><select data-world="${w.id}" class="lvlsel">${[0,1,2,3].map(l=>`<option value="${l}" ${ws.lvl===l?'selected':''}>${l+1}</option>`).join('')}</select></td><td>${doneCount(w)}/${needCount(w)}</td><td>${ws.stars}</td></tr>`; });
   t.querySelectorAll('.lvlsel').forEach(sel=>sel.onchange=()=>{ wstate(sel.dataset.world).lvl=+sel.value; save(); renderParent(); });
   const hard=[]; WORLDS.forEach(w=>worldWords(w).forEach(([x])=>{ const s=wstat(w,x); if(s.miss>0&&s.streak<2) hard.push(`${x} (${s.miss})`); }));
   $('hardWords').innerHTML=hard.length?hard.map(h=>`<span class="chip">${h}</span>`).join(''):'<span class="note">עדיין אין. כל הכבוד!</span>';
@@ -600,6 +753,7 @@ function renderParent(){
   $('customWorld').innerHTML=WORLDS.map(w=>`<option value="${w.id}">${w.emoji} ${w.name}</option>`).join('');
   $('customList').innerHTML=state.custom.map((c,i)=>`<span class="chip">${c.emoji} ${c.word} <button data-i="${i}">✕</button></span>`).join('');
   $('customList').querySelectorAll('button').forEach(b=>b.onclick=()=>{ state.custom.splice(+b.dataset.i,1); save(); renderParent(); });
+  $('shopNote').textContent=`כוכבים לבזבוז: ${wallet()} · פריטים בארון: ${shopState().owned.length} מתוך ${ITEMS.length} · הוצאו עד היום: ${shopState().spent} כוכבים.`;
   fillVoiceSelect(); renderDiag();
 }
 
@@ -608,14 +762,15 @@ $('picture').onclick=peek; $('hearBtn').onclick=peek;
 $('backBtn').onclick=()=>{ if(G) clearInterval(G.timer); G=null; speechSynthesis.cancel&&speechSynthesis.cancel(); renderHome(); show('home'); };
 $('againBtn').onclick=()=>{ if(G.w.challenge) startChallenge(); else startRound(G.w); };
 $('homeBtn').onclick=()=>{ renderHome(); show('home'); };
-$('bookBtn').onclick=()=>{ renderBook(); show('book'); };
+$('shopBtn').onclick=()=>openShop();
+$('shopFromReward').onclick=()=>openShop();
+$('shopBack').onclick=()=>{ renderHome(); show('home'); };
 function startChallenge(){
   const pool=[]; WORLDS.forEach((w,i)=>{ if(!w.sentence && !w.listen && isUnlocked(w,i)) worldWords(w).forEach(x=>{ if(!pool.some(y=>y[0]===x[0])) pool.push(x); }); });
   const cw={id:'challenge', name:'Princess Challenge', emoji:'🏆', challenge:true, intro:'p_challenge', stickers:['🏆'], words:pool};
   wstate('challenge').lvl=0; startRound(cw);
 }
-$('bookBack').onclick=()=>{ renderHome(); show('home'); };
-$('starsPill').onclick=()=>sayPhrase('p_great','Great job!');
+$('starsPill').onclick=()=>openShop();
 let pressTimer=null;
 const crown=$('crown');
 const startPress=()=>{ pressTimer=setTimeout(()=>{ renderParent(); show('parent'); },1200); };
@@ -634,6 +789,7 @@ function renderDiag(){ const d=$('speechDiag'); if(!d) return; let v=0; try{ v=s
 $('testVoice').onclick=()=>{ if(useClips()) playClips(['p_hello','l_c','l_a','l_t','w_cat'],{gap:0.3}).catch(()=>speak('Hello princess! C. A. T. Cat!')); else speak('Hello princess! C. A. T. Cat!'); setTimeout(renderDiag,1500); };
 $('addCustom').onclick=()=>{ const word=$('customWord').value.trim().toLowerCase(), emoji=$('customEmoji').value.trim()||'⭐', world=$('customWorld').value;
   if(!word) return; state.custom.push({world,word,emoji}); save(); $('customWord').value=''; $('customEmoji').value=''; renderParent(); };
+$('bonusStars').onclick=()=>{ wstate('bonus').stars+=30; save(); renderParent(); };
 $('unlockAll').onclick=()=>{ state.unlockedAll=true; save(); renderParent(); alert('כל העולמות פתוחים!'); };
 $('resetAll').onclick=()=>{ if(confirm('לאפס את כל ההתקדמות, הכוכבים והמדבקות?')){ const custom=state.custom, settings=state.settings; state=defaultState(); state.custom=custom; state.settings=settings; save(); renderParent(); } };
 
