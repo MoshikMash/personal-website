@@ -283,7 +283,7 @@ button:active{transform:scale(.95)}
   <section>
     <h3>הגדרות</h3>
     <div class="toggle"><span>אותיות גדולות (ABC) במקום קטנות (abc)</span><div class="switch" id="upperSwitch"></div></div>
-    <div class="toggle"><span>לאיית את המילה בקול אחרי שמסיימים</span><div class="switch" id="spellSwitch"></div></div>
+    <div class="toggle"><span>לאיית את המילה אות-אות בקול אחרי שמסיימים (כבוי: נשמעת רק המילה השלמה)</span><div class="switch" id="spellSwitch"></div></div>
     <div class="toggle"><span>להשתמש בקול של הטלפון במקום בהקלטות המובנות</span><div class="switch" id="ttsSwitch"></div></div>
     <label>קול באנגלית<select id="voiceSelect"></select></label>
     <button class="pbtn ghost" id="testVoice">🔊 בדיקת קול</button>
@@ -357,10 +357,11 @@ const KEY = 'wordPrincess.v1';
 
 /* ================= STATE ================= */
 let state = load();
-function defaultState(){ return { v:4, settings:{upper:true, spell:true, voice:''}, words:{}, worlds:{}, custom:[], unlockedAll:false }; }
+function defaultState(){ return { v:5, settings:{upper:true, spell:false, voice:''}, words:{}, worlds:{}, custom:[], unlockedAll:false }; }
 function load(){ try{ const s=JSON.parse(localStorage.getItem(KEY)); if(s&&s.settings){ const st=Object.assign(defaultState(),s); st.settings=Object.assign(defaultState().settings,s.settings);
   if(s.v!==4){ /* older saves tracked a level per word; now the whole world has one level */
     Object.values(st.words).forEach(w=>{ w.best=(w.lvl||0)>=1?0:-1; delete w.lvl; }); Object.values(st.worlds).forEach(ws=>{ ws.lvl=0; }); st.v=4; }
+  if(st.v===4){ st.settings.spell=false; st.v=5; }
   return st; } }catch(e){} return defaultState(); }
 function save(){ try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){} }
 function wstate(id){ return state.worlds[id] || (state.worlds[id]={lvl:0,stars:0,stickers:[],rounds:0,lastRound:[]}); }
@@ -571,7 +572,7 @@ function tapTile(b){
   if(!G||!G.cur||G.cur.done) return;
   const c=G.cur, expected=c.tokens[c.pos], tok=b.dataset.tok;
   if(tok===expected){
-    sfx.tap(); speakToken(tok,G.sentence);
+    /* tiles are silent by request: only the whole word is spoken */
     b.classList.add('used'); document.querySelectorAll('.tile.hint').forEach(h=>h.classList.remove('hint'));
     const slot=document.querySelector(`.slot[data-k="${c.pos}"]`); slot.classList.remove('ghost','next'); slot.classList.add('filled'); slot.textContent=fmt(tok);
     c.pos++; c.wrongHere=0;
