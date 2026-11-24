@@ -60,6 +60,9 @@ button:active{transform:scale(.95)}
 
 /* ---------- PLAY ---------- */
 #play{justify-content:space-between}
+#play.many{--tile:min(15vw,60px)}
+#play.many .picture{--w:min(48vw,190px)}
+#play.many .wordhint{min-height:40px;font-size:clamp(26px,8vw,36px)}
 .topbar{display:flex;align-items:center;justify-content:space-between;gap:10px}
 .round{background:var(--card);border-radius:999px;padding:8px 14px;font-weight:700;font-size:18px;box-shadow:var(--shadow);display:flex;gap:8px;align-items:center}
 .iconbtn{width:46px;height:46px;border-radius:50%;background:var(--card);box-shadow:var(--shadow);font-size:22px;display:grid;place-items:center}
@@ -509,7 +512,8 @@ function nextItem(){
   showHint(G.listen?'hidden':tier===0?'clear':tier===1?'blur':'hidden');
   // tray
   const tray=$('tray'); tray.innerHTML='';
-  buildTray(G.cur.tokens,tier,G.sentence).forEach(tok=>{ const b=document.createElement('button'); b.className='tile'+(G.sentence?' sentence':'')+(tok.length>1&&!G.sentence?' wide':''); b.textContent=fmt(tok); b.dataset.tok=tok; b.onclick=()=>tapTile(b); tray.appendChild(b); });
+  const tiles=buildTray(G.cur.tokens,tier,G.sentence); $('play').classList.toggle('many',tiles.length>12);
+  tiles.forEach(tok=>{ const b=document.createElement('button'); b.className='tile'+(G.sentence?' sentence':'')+(tok.length>1&&!G.sentence?' wide':''); b.textContent=fmt(tok); b.dataset.tok=tok; b.onclick=()=>tapTile(b); tray.appendChild(b); });
   setTimeout(()=>say(it.t,{rate:0.8}),350);
   if(G.listen) setTimeout(()=>{ if(G&&G.cur&&G.cur.text===it.t&&!G.cur.done&&G.cur.pos===0) say(it.t,{rate:0.8}); },2200);
 }
