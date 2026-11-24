@@ -217,10 +217,11 @@ button:active{transform:scale(.95)}
     <h3>הגדרות</h3>
     <div class="toggle"><span>אותיות גדולות (ABC) במקום קטנות (abc)</span><div class="switch" id="upperSwitch"></div></div>
     <div class="toggle"><span>לאיית את המילה בקול אחרי שמסיימים</span><div class="switch" id="spellSwitch"></div></div>
+    <div class="toggle"><span>להשתמש בקול של הטלפון במקום בהקלטות המובנות</span><div class="switch" id="ttsSwitch"></div></div>
     <label>קול באנגלית<select id="voiceSelect"></select></label>
     <button class="pbtn ghost" id="testVoice">🔊 בדיקת קול</button>
     <p class="note" id="speechDiag"></p>
-    <p class="note">הקולות מגיעים מהטלפון עצמו. באייפון מומלץ "Samantha", באנדרואיד "Google US English". אם אין קול בכלל: באייפון בדקי שמתג ההשתקה בצד לא מופעל והעלי ווליום, ונסי לפתוח את המשחק ישירות ב-Safari.</p>
+    <p class="note">כברירת מחדל המשחק משמיע הקלטות מובנות. הקול של הטלפון (באייפון מומלץ "Samantha", באנדרואיד "Google US English") משמש רק למילים שהוספת בעצמך, או אם הפעלת את המתג למעלה. אם אין קול בכלל: באייפון בדקי שמתג ההשתקה בצד לא מופעל והעלי ווליום.</p>
   </section>
 
   <section>
@@ -343,10 +344,39 @@ function speak(text,{rate=0.85,pitch=1.15,cancel=true}={}){
 }
 /* Safari sometimes wedges in the "speaking" state; unstick it. */
 setInterval(()=>{ try{ if(speechLog.supported && speechSynthesis.paused) speechSynthesis.resume(); }catch(e){} },3000);
-function speakToken(tok,sentence){
-  if(sentence) speak(tok,{rate:0.9});
-  else speak(tok.toUpperCase(),{rate:0.8}); // letter name
+/* ---- bundled voice clips (audio/*.mp3), played through Web Audio; the phone's own voice is only a fallback ---- */
+const CLIPS=new Set(["l_a", "l_b", "l_c", "l_d", "l_e", "l_f", "l_g", "l_h", "l_i", "l_j", "l_k", "l_l", "l_m", "l_n", "l_o", "l_p", "l_q", "l_r", "l_s", "l_t", "l_u", "l_v", "l_w", "l_x", "l_y", "l_z", "p_amazing", "p_finish", "p_great", "p_hello", "p_level2", "p_level3", "p_level4", "p_sentences", "p_spell", "p_sticker", "w_a", "w_am", "w_ant", "w_bag", "w_bear", "w_bed", "w_bee", "w_bell", "w_big", "w_bird", "w_box", "w_bus", "w_cake", "w_can", "w_car", "w_cat", "w_cold", "w_cow", "w_cream", "w_cup", "w_dog", "w_duck", "w_ear", "w_egg", "w_eye", "w_fish", "w_fox", "w_frog", "w_hat", "w_hot", "w_i", "w_i_am_cold", "w_i_am_hot", "w_i_can_run", "w_i_like_cake", "w_i_like_ice_cream", "w_i_like_milk", "w_i_like_pink", "w_i_see_a_dog", "w_i_see_a_star", "w_i_see_mom", "w_ice", "w_is", "w_key", "w_kite", "w_like", "w_lion", "w_milk", "w_mom", "w_moon", "w_owl", "w_pig", "w_pink", "w_ring", "w_run", "w_sea", "w_see", "w_sock", "w_star", "w_sun", "w_the", "w_the_pig_is_pink", "w_the_sun_is_hot", "w_tree"]);
+const clipCache={}; let playing=[], playGen=0; const clipLog={loaded:0, errors:[]};
+function clipKey(text){ return 'w_'+text.toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,''); }
+function ensureCtx(){ actx = actx || new (window.AudioContext||window.webkitAudioContext)(); if(actx.state==='suspended') actx.resume(); return actx; }
+function loadClip(key){
+  if(clipCache[key]) return clipCache[key];
+  const p=fetch('audio/'+key+'.mp3').then(r=>{ if(!r.ok) throw new Error('HTTP '+r.status); return r.arrayBuffer(); })
+    .then(buf=>new Promise((res,rej)=>ensureCtx().decodeAudioData(buf,res,rej))).then(b=>{ clipLog.loaded++; return b; });
+  clipCache[key]=p; p.catch(e=>{ delete clipCache[key]; clipLog.errors.push(key+': '+(e&&e.message||e)); if(clipLog.errors.length>4) clipLog.errors.shift(); });
+  return p;
 }
+function stopClips(){ playing.forEach(x=>{ try{ x.stop(); }catch(e){} }); playing=[]; }
+async function playClips(keys,{gap=0.1,cancel=true}={}){
+  const ctx=ensureCtx(); /* resume inside the tap, before any await, so iOS unlocks audio */
+  let gen=playGen; if(cancel){ stopClips(); gen=++playGen; try{ if(speechLog.supported) speechSynthesis.cancel(); }catch(e){} }
+  const bufs=await Promise.all(keys.map(loadClip));
+  if(cancel && gen!==playGen) return;
+  let t=ctx.currentTime+0.02;
+  bufs.forEach(b=>{ const src=ctx.createBufferSource(); src.buffer=b; src.connect(ctx.destination); src.start(t); t+=b.duration+gap; playing.push(src); });
+  speechLog.spoken++;
+}
+function useClips(){ return !state.settings.useTTS; }
+function say(text,opts={}){ const k=clipKey(text); if(useClips()&&CLIPS.has(k)) playClips([k],opts).catch(()=>speak(text,opts)); else speak(text,opts); }
+function sayLetter(ch){ const k='l_'+ch.toLowerCase(); if(useClips()&&CLIPS.has(k)) playClips([k]).catch(()=>speak(ch.toUpperCase(),{rate:0.8})); else speak(ch.toUpperCase(),{rate:0.8}); }
+function sayPhrase(id,text){ if(useClips()&&CLIPS.has(id)) playClips([id]).catch(()=>speak(text)); else speak(text); }
+function spellOut(tokens,word){
+  const ks=tokens.map(t=>'l_'+t.toLowerCase()), wk=clipKey(word);
+  const tts=()=>{ speak(tokens.map(t=>t.toUpperCase()).join('. ')+'.',{rate:0.7}); speak(word+'!',{rate:0.8,cancel:false}); };
+  if(useClips()&&CLIPS.has(wk)&&ks.every(k=>CLIPS.has(k))) playClips(ks.concat([wk]),{gap:0.3}).catch(tts); else tts();
+}
+function preloadClips(keys){ if(!useClips()) return; keys.forEach(k=>{ if(CLIPS.has(k)) loadClip(k).catch(()=>{}); }); }
+function speakToken(tok,sentence){ if(sentence) say(tok,{rate:0.9}); else sayLetter(tok); }
 
 /* decorations */
 (function(){ const d=$('deco'); const em=['🦄','🍭','🍦','👑','✨','🌸','💖','🧁','🌈','⭐'];
@@ -362,7 +392,7 @@ function renderHome(){
     b.innerHTML=`<div class="em">${w.emoji}</div><div class="info"><div class="name">${w.name}</div>
       <div class="sub">${unlocked?`<span>Level ${ws.lvl+1}</span><span>📝 ${Math.min(done,need)}/${need}</span><span>⭐ ${ws.stars}</span>`:`<span>Finish ${WORLDS[i-1].emoji} level 1</span>`}</div>
       <div class="bar"><i style="width:${Math.round(100*Math.min(done,need)/need)}%"></i></div></div>${unlocked?'<div class="go">▶️</div>':''}`;
-    b.onclick=()=>{ if(!unlocked){ sfx.wrong(); b.classList.add('wrong'); setTimeout(()=>b.classList.remove('wrong'),400); speak('Finish the words in '+WORLDS[i-1].name+' first!'); return; } startRound(w); };
+    b.onclick=()=>{ if(!unlocked){ sfx.wrong(); b.classList.add('wrong'); setTimeout(()=>b.classList.remove('wrong'),400); sayPhrase('p_finish','Finish the other world first!'); return; } startRound(w); };
     box.appendChild(b);
   });
   $('totalStars').textContent=totalStars();
@@ -383,7 +413,8 @@ function startRound(w){
   $('worldEmoji').textContent=w.emoji;
   $('roundStars').textContent='0';
   show('play'); renderDots();
-  speak(G.sentence?"Let's make sentences!":"Let's spell words!");
+  sayPhrase(G.sentence?'p_sentences':'p_spell', G.sentence?"Let's make sentences!":"Let's spell words!");
+  preloadClips('abcdefghijklmnopqrstuvwxyz'.split('').map(c=>'l_'+c).concat(G.items.flatMap(it=>[clipKey(it.t)].concat(G.sentence?it.t.split(' ').map(clipKey):[]))));
   setTimeout(nextItem,900);
 }
 function renderDots(){ $('dots').innerHTML=G.items.map((_,k)=>`<b class="${k<G.i?'done':k===G.i?'now':''}"></b>`).join(''); }
@@ -419,10 +450,10 @@ function nextItem(){
   // tray
   const tray=$('tray'); tray.innerHTML='';
   buildTray(G.cur.tokens,tier,G.sentence).forEach(tok=>{ const b=document.createElement('button'); b.className='tile'+(G.sentence?' sentence':''); b.textContent=fmt(tok); b.dataset.tok=tok; b.onclick=()=>tapTile(b); tray.appendChild(b); });
-  setTimeout(()=>speak(it.t,{rate:0.8}),350);
+  setTimeout(()=>say(it.t,{rate:0.8}),350);
 }
 function setGhost(on,faint){ document.querySelectorAll('.slot:not(.filled)').forEach(s=>{ s.classList.toggle('ghost',on); s.classList.toggle('faint',!!faint); }); }
-function peek(){ if(!G||!G.cur||G.cur.done) return; speak(G.cur.text,{rate:0.8});
+function peek(){ if(!G||!G.cur||G.cur.done) return; say(G.cur.text,{rate:0.8});
   if(G.cur.tier===2 && !G.cur.peeked){ G.cur.peeked=true; G.cur.mistakes++; setGhost(true); clearTimeout(G.peekTimer); G.peekTimer=setTimeout(()=>setGhost(false),1500); } }
 function tapTile(b){
   if(!G||!G.cur||G.cur.done) return;
@@ -450,9 +481,9 @@ function wordDone(){
   if(stars>=2 && s.best<ws.lvl) s.best=ws.lvl;
   ws.stars+=stars; save();
   // speak
-  if(G.sentence){ speak(c.text,{rate:0.85}); }
-  else if(state.settings.spell){ speak(c.tokens.map(t=>t.toUpperCase()).join('. ')+'.',{rate:0.7}); speak(c.text+'!',{rate:0.8,cancel:false}); }
-  else speak(c.text+'!',{rate:0.8});
+  if(G.sentence){ say(c.text,{rate:0.85}); }
+  else if(state.settings.spell){ spellOut(c.tokens,c.text); }
+  else say(c.text,{rate:0.8});
   sfx.win(); confetti(stars*12);
   $('bannerWord').textContent=fmt(c.text); $('bannerStars').textContent='⭐'.repeat(stars); $('banner').classList.add('show');
   const wait=G.sentence?2200:(state.settings.spell?3400:2200);
@@ -467,7 +498,7 @@ function endRound(){
   $('bigsticker').textContent=levelUp?'🏆':sticker; $('rewardStars').textContent=G.stars;
   $('rewardTitle').textContent=levelUp?`Level ${ws.lvl+1}!`:fresh.length?'You got a sticker!':'Amazing!';
   show('reward'); sfx.sticker(); confetti(70);
-  speak(levelUp?`Level up! Welcome to level ${ws.lvl+1}!`:fresh.length?'Wonderful! You got a new sticker!':'Amazing! You are a word princess!');
+  if(levelUp) sayPhrase('p_level'+(ws.lvl+1),`Level up! Welcome to level ${ws.lvl+1}!`); else if(fresh.length) sayPhrase('p_sticker','Wonderful! You got a new sticker!'); else sayPhrase('p_amazing','Amazing! You are a word princess!');
 }
 
 /* ================= STICKER BOOK ================= */
@@ -487,6 +518,7 @@ function renderParent(){
   $('hardWords').innerHTML=hard.length?hard.map(h=>`<span class="chip">${h}</span>`).join(''):'<span class="note">עדיין אין. כל הכבוד!</span>';
   $('upperSwitch').classList.toggle('on',state.settings.upper);
   $('spellSwitch').classList.toggle('on',state.settings.spell);
+  $('ttsSwitch').classList.toggle('on',!!state.settings.useTTS);
   $('customWorld').innerHTML=WORLDS.map(w=>`<option value="${w.id}">${w.emoji} ${w.name}</option>`).join('');
   $('customList').innerHTML=state.custom.map((c,i)=>`<span class="chip">${c.emoji} ${c.word} <button data-i="${i}">✕</button></span>`).join('');
   $('customList').querySelectorAll('button').forEach(b=>b.onclick=()=>{ state.custom.splice(+b.dataset.i,1); save(); renderParent(); });
@@ -500,7 +532,7 @@ $('againBtn').onclick=()=>startRound(G.w);
 $('homeBtn').onclick=()=>{ renderHome(); show('home'); };
 $('bookBtn').onclick=()=>{ renderBook(); show('book'); };
 $('bookBack').onclick=()=>{ renderHome(); show('home'); };
-$('starsPill').onclick=()=>speak('You have '+totalStars()+' stars!');
+$('starsPill').onclick=()=>sayPhrase('p_great','Great job!');
 let pressTimer=null;
 const crown=$('crown');
 const startPress=()=>{ pressTimer=setTimeout(()=>{ renderParent(); show('parent'); },1200); };
@@ -511,10 +543,12 @@ crown.addEventListener('contextmenu',e=>e.preventDefault());
 $('parentClose').onclick=()=>{ renderHome(); show('home'); };
 $('upperSwitch').onclick=()=>{ state.settings.upper=!state.settings.upper; save(); renderParent(); };
 $('spellSwitch').onclick=()=>{ state.settings.spell=!state.settings.spell; save(); renderParent(); };
+$('ttsSwitch').onclick=()=>{ state.settings.useTTS=!state.settings.useTTS; save(); renderParent(); };
 $('voiceSelect').onchange=e=>{ state.settings.voice=e.target.value; save(); };
 function renderDiag(){ const d=$('speechDiag'); if(!d) return; let v=0; try{ v=speechSynthesis.getVoices().length; }catch(e){}
-  d.textContent=!speechLog.supported?'❌ הדפדפן הזה לא תומך בדיבור. נסי לפתוח את המשחק ב-Safari (אייפון) או ב-Chrome (אנדרואיד).':`מנוע דיבור: זמין · קולות במכשיר: ${v} · קולות באנגלית: ${voices.length} · הושמעו: ${speechLog.spoken}`+(speechLog.errors.length?` · שגיאות: ${speechLog.errors.join(', ')}`:''); }
-$('testVoice').onclick=()=>{ speak('Hello princess! C. A. T. Cat!'); setTimeout(renderDiag,1500); };
+  const clips=`הקלטות: ${CLIPS.size} · נטענו: ${clipLog.loaded}`+(clipLog.errors.length?` · שגיאות: ${clipLog.errors.join(', ')}`:'')+' · ';
+  d.textContent=clips+(!speechLog.supported?'❌ הדפדפן הזה לא תומך בדיבור. נסי לפתוח את המשחק ב-Safari (אייפון) או ב-Chrome (אנדרואיד).':`מנוע דיבור: זמין · קולות במכשיר: ${v} · קולות באנגלית: ${voices.length} · הושמעו: ${speechLog.spoken}`+(speechLog.errors.length?` · שגיאות: ${speechLog.errors.join(', ')}`:'')); }
+$('testVoice').onclick=()=>{ if(useClips()) playClips(['p_hello','l_c','l_a','l_t','w_cat'],{gap:0.3}).catch(()=>speak('Hello princess! C. A. T. Cat!')); else speak('Hello princess! C. A. T. Cat!'); setTimeout(renderDiag,1500); };
 $('addCustom').onclick=()=>{ const word=$('customWord').value.trim().toLowerCase(), emoji=$('customEmoji').value.trim()||'⭐', world=$('customWorld').value;
   if(!word) return; state.custom.push({world,word,emoji}); save(); $('customWord').value=''; $('customEmoji').value=''; renderParent(); };
 $('unlockAll').onclick=()=>{ state.unlockedAll=true; save(); renderParent(); alert('כל העולמות פתוחים!'); };
