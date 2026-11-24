@@ -148,6 +148,8 @@ button:active{transform:scale(.95)}
 .tab{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:1px;background:var(--card);border-radius:18px;padding:8px 12px;font-size:22px;box-shadow:var(--shadow);border:3px solid transparent}
 .tab small{font-size:11px;font-weight:700;color:var(--ink-soft)}
 .tab.on{border-color:var(--pink-deep);background:#fff}
+.tab{position:relative}
+.tab .badge{position:absolute;top:-6px;right:-6px;background:var(--pink-deep);color:#fff;font-size:11px;border-radius:999px;min-width:18px;height:18px;display:grid;place-items:center;padding:0 4px}
 .items{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;overflow-y:auto;flex:1;min-height:0;padding:4px 2px 16px}
 .item{background:var(--card);border-radius:20px;padding:8px 6px;display:flex;flex-direction:column;align-items:center;gap:4px;box-shadow:var(--shadow);border:3px solid transparent;position:relative}
 .item .pv{width:100%;aspect-ratio:3/4;overflow:hidden;display:flex;align-items:flex-start;justify-content:center}
@@ -344,7 +346,7 @@ const WORLDS = [
 const DIGRAPHS=['sh','ch','th','ee','oo'];
 const WORLD_BG={castle:'linear-gradient(145deg,#ffd1e8,#d9c6ff)',meadow:'linear-gradient(145deg,#c9f7e6,#bfe3ff)',icecream:'linear-gradient(145deg,#ffe0c2,#ffc2dc)',families:'linear-gradient(145deg,#fff1b8,#c9f7e6 50%,#d9c6ff)',sounds:'linear-gradient(145deg,#fff3c4,#ffc2dc)',forest:'linear-gradient(145deg,#e3d4ff,#c9f7e6)',lagoon:'linear-gradient(145deg,#bff5f0,#bfe3ff)',challenge:'linear-gradient(145deg,#fff2b3,#ffd8a8)'};
 const IMG_FOR={'I am hot':'hot_face','I am cold':'cold_face','I see mom':'woman','I like cake':'cake','I like milk':'milk','I can run':'runner','I like pink':'pink_heart','I see a dog':'dog','The sun is hot':'sun_face','I see a star':'star','The pig is pink':'pig','I like ice cream':'icecream'};
-const IMG_SET=new Set(["ant", "bag", "bat", "bath", "bear", "bed", "bee", "bell", "bird", "book", "boot", "box", "bus", "cake", "car", "cat", "chair", "cheese", "chick", "cold_face", "cow", "crown", "cup", "dog", "duck", "ear", "ear_icon", "egg", "eye", "fish", "fox", "frog", "hat", "hen", "hot_face", "icecream", "key", "kite", "lion", "log", "man", "milk", "moon", "owl", "pan", "pen", "pet_bunny", "pet_butterfly", "pet_cat", "pet_dog", "pet_hamster", "pet_unicorn", "pig", "pink_heart", "ring", "runner", "sea", "sheep", "shell", "ship", "sock", "spoon", "star", "sun", "sun_face", "ten", "three", "tooth", "tree", "trophy", "van", "woman", "world_castle", "world_challenge", "world_families", "world_forest", "world_icecream", "world_lagoon", "world_meadow", "world_sounds"]);
+const IMG_SET=new Set(["ant", "bag", "bat", "bath", "bear", "bed", "bee", "bell", "bird", "book", "boot", "box", "bus", "cake", "car", "cat", "chair", "cheese", "chick", "cold_face", "cow", "crown", "cup", "dog", "duck", "ear", "ear_icon", "egg", "eye", "fish", "fox", "frog", "hat", "hen", "hot_face", "icecream", "key", "kite", "lion", "log", "man", "milk", "moon", "owl", "pan", "pen", "pet_bird", "pet_bunny", "pet_butterfly", "pet_cat", "pet_dog", "pet_dolphin", "pet_hamster", "pet_lamb", "pet_turtle", "pet_unicorn", "pig", "pink_heart", "place_castle", "ride_horse", "ride_pony", "ring", "runner", "sea", "sheep", "shell", "ship", "sock", "spoon", "star", "sun", "sun_face", "ten", "three", "tooth", "tree", "trophy", "van", "woman", "world_castle", "world_challenge", "world_families", "world_forest", "world_icecream", "world_lagoon", "world_meadow", "world_sounds"]);
 function worldIcon(id,emoji){ return IMG_SET.has('world_'+id)?`<img src="img/world_${id}.png" alt="">`:emoji; }
 function imgFor(text){ const k=IMG_FOR[text]||text.toLowerCase(); return IMG_SET.has(k)?'img/'+k+'.png':null; }
 const CHALLENGE_LEN=10;
@@ -622,89 +624,201 @@ function endRound(){
 /* ================= PRINCESS + SHOP ================= */
 const SKIN='#f8cfae', SKIN_D='#e9b48f';
 function starPts(cx,cy,r1,r2,n=5){ let p=[]; for(let i=0;i<n*2;i++){ const r=i%2?r2:r1, a=-Math.PI/2+i*Math.PI/n; p.push((cx+r*Math.cos(a)).toFixed(1)+','+(cy+r*Math.sin(a)).toFixed(1)); } return p.join(' '); }
-function dressSVG(c1,c2,style,extra=''){
-  const bod=`<path d="M92 150 Q120 140 148 150 L142 198 L98 198 Z" fill="${c1}"/>`;
-  const sleeves=`<circle cx="88" cy="154" r="13" fill="${c1}"/><circle cx="152" cy="154" r="13" fill="${c1}"/>`;
-  let skirt='';
-  if(style==='ball') skirt=`<path d="M98 198 L142 198 Q206 236 200 292 L40 292 Q34 236 98 198 Z" fill="${c1}"/><path d="M120 198 Q150 250 158 292 L82 292 Q90 250 120 198 Z" fill="${c2}" opacity=".75"/>`;
-  else if(style==='mermaid') skirt=`<path d="M98 198 L142 198 L150 252 Q120 266 90 252 Z" fill="${c1}"/><path d="M90 252 Q120 266 150 252 L178 292 L62 292 Z" fill="${c2}"/>`;
-  else skirt=`<path d="M98 198 L142 198 L180 292 L60 292 Z" fill="${c1}"/><path d="M120 198 L152 292 L88 292 Z" fill="${c2}" opacity=".7"/>`;
-  return bod+sleeves+skirt+`<path d="M98 198 Q120 206 142 198" stroke="${c2}" stroke-width="4" fill="none"/>`+extra;
-}
+const heartPath=(cx,cy,s)=>`M${cx} ${cy+s} L${cx-s} ${cy} Q${cx-s} ${cy-s*0.9} ${cx-s/2} ${cy-s*0.8} Q${cx} ${cy-s*0.6} ${cx} ${cy-s*0.3} Q${cx} ${cy-s*0.6} ${cx+s/2} ${cy-s*0.8} Q${cx+s} ${cy-s*0.9} ${cx+s} ${cy} Z`;
+const dots=(c,pts,r=3)=>pts.map(([x,y])=>`<circle cx="${x}" cy="${y}" r="${r}" fill="${c}"/>`).join('');
 const SPARKS=(c='#fff')=>[[80,250],[150,230],[110,275],[165,278],[70,215]].map(([x,y])=>`<polygon points="${starPts(x,y,5,2)}" fill="${c}" opacity=".9"/>`).join('');
+/* ---- clothing builders (canvas 240x320: shoulders y≈150, waist y≈198, hem y≈292) ---- */
+function topSVG(c1,c2,style,extra=''){
+  const bod=`<path d="M92 150 Q120 140 148 150 L142 198 L98 198 Z" fill="${c1}"/>`;
+  let sl='';
+  if(style==='puff') sl=`<circle cx="88" cy="154" r="13" fill="${c1}"/><circle cx="152" cy="154" r="13" fill="${c1}"/>`;
+  else if(style==='tee') sl=`<path d="M92 150 L74 162 L80 176 L96 168 Z" fill="${c1}"/><path d="M148 150 L166 162 L160 176 L144 168 Z" fill="${c1}"/>`;
+  else if(style==='long') sl=`<path d="M92 152 Q68 184 70 212 L80 214 Q84 190 100 166 Z" fill="${c1}"/><path d="M148 152 Q172 184 170 212 L160 214 Q156 190 140 166 Z" fill="${c1}"/>`;
+  else if(style==='strap') sl=`<rect x="100" y="140" width="5" height="14" fill="${c2}"/><rect x="135" y="140" width="5" height="14" fill="${c2}"/>`;
+  return bod+sl+`<path d="M98 198 Q120 206 142 198" stroke="${c2}" stroke-width="4" fill="none"/>`+extra;
+}
+function skirtSVG(c1,c2,style,extra=''){
+  let k='';
+  if(style==='ball') k=`<path d="M98 198 L142 198 Q206 236 200 292 L40 292 Q34 236 98 198 Z" fill="${c1}"/><path d="M120 198 Q150 250 158 292 L82 292 Q90 250 120 198 Z" fill="${c2}" opacity=".75"/>`;
+  else if(style==='mermaid') k=`<path d="M98 198 L142 198 L150 252 Q120 266 90 252 Z" fill="${c1}"/><path d="M90 252 Q120 266 150 252 L178 292 L62 292 Z" fill="${c2}"/>`;
+  else if(style==='tutu') k=`<path d="M98 198 L142 198 L166 246 Q150 256 140 244 Q130 258 120 246 Q110 258 100 244 Q90 256 74 246 Z" fill="${c1}"/><path d="M98 198 L142 198 L156 232 Q120 244 84 232 Z" fill="${c2}" opacity=".6"/>`;
+  else if(style==='mini') k=`<path d="M98 198 L142 198 L152 240 L88 240 Z" fill="${c1}"/><path d="M98 198 L142 198 L144 206 L96 206 Z" fill="${c2}"/>`;
+  else if(style==='pleat') k=`<path d="M98 198 L142 198 L170 270 L70 270 Z" fill="${c1}"/>`+[90,105,120,135,150].map(x=>`<line x1="${x}" y1="200" x2="${x+(x-120)*0.7}" y2="270" stroke="${c2}" stroke-width="3"/>`).join('');
+  else k=`<path d="M98 198 L142 198 L180 292 L60 292 Z" fill="${c1}"/><path d="M120 198 L152 292 L88 292 Z" fill="${c2}" opacity=".7"/>`;
+  return k+extra;
+}
+function dressSVG(c1,c2,style,extra='',top='puff'){ return topSVG(c1,c2,top)+skirtSVG(c1,c2,style)+extra; }
+const shoes=(c,hi='#fff')=>`<ellipse cx="104" cy="295" rx="15" ry="7" fill="${c}"/><ellipse cx="136" cy="295" rx="15" ry="7" fill="${c}"/><ellipse cx="100" cy="292" rx="5" ry="2" fill="${hi}" opacity=".8"/><ellipse cx="132" cy="292" rx="5" ry="2" fill="${hi}" opacity=".8"/>`;
+const boots=(c,c2,h=22)=>`<rect x="90" y="${298-h}" width="28" height="${h}" rx="8" fill="${c}"/><rect x="122" y="${298-h}" width="28" height="${h}" rx="8" fill="${c}"/><rect x="90" y="${298-h}" width="28" height="6" rx="3" fill="${c2}"/><rect x="122" y="${298-h}" width="28" height="6" rx="3" fill="${c2}"/>`;
+const ballet=(c)=>`<ellipse cx="104" cy="295" rx="15" ry="7" fill="${c}"/><ellipse cx="136" cy="295" rx="15" ry="7" fill="${c}"/><path d="M96 290 L112 272 M112 290 L96 272" stroke="${c}" stroke-width="3"/><path d="M128 290 L144 272 M144 290 L128 272" stroke="${c}" stroke-width="3"/>`;
+const heels=(c,b)=>`<ellipse cx="104" cy="295" rx="15" ry="7" fill="${c}"/><ellipse cx="136" cy="295" rx="15" ry="7" fill="${c}"/><path d="${heartPath(104,289,4)}" fill="${b}"/><path d="${heartPath(136,289,4)}" fill="${b}"/>`;
+const glasses=(c,shape='round',lens=c)=>{ const l=(cx)=>shape==='heart'?`<path d="${heartPath(cx,94,11)}" fill="${lens}" opacity=".85"/>`:shape==='star'?`<polygon points="${starPts(cx,96,13,6)}" fill="${lens}" opacity=".85"/>`:shape==='cat'?`<path d="M${cx-12} 90 Q${cx} 84 ${cx+13} 86 L${cx+10} 104 Q${cx} 108 ${cx-12} 102 Z" fill="${lens}" opacity=".85"/>`:`<ellipse cx="${cx}" cy="96" rx="12" ry="10" fill="${lens}" opacity=".85"/>`; return l(103)+l(137)+`<path d="M115 94 Q120 90 125 94" stroke="${c}" stroke-width="3" fill="none"/><line x1="91" y1="92" x2="76" y2="88" stroke="${c}" stroke-width="3"/><line x1="149" y1="92" x2="164" y2="88" stroke="${c}" stroke-width="3"/>`; };
+const bag=(body,c2)=>`<path d="M72 218 Q60 226 62 240" stroke="${c2}" stroke-width="3" fill="none"/>`+body;
+const tiara=(fill,stroke,gem)=>`<path d="M90 60 L100 42 L110 56 L120 36 L130 56 L140 42 L150 60 Z" fill="${fill}" stroke="${stroke}" stroke-width="2"/><circle cx="120" cy="44" r="4" fill="${gem}"/>`;
+const earr=(l,r)=>l+r;
+const PET=(id)=>`img/${id}.png`;
+
 const ITEMS=[
-  // hair colours
-  {id:'hair_brown',slot:'hair',name:'Brown Hair',price:0,color:'#6b3e2e'},
-  {id:'hair_blonde',tier:1,slot:'hair',name:'Golden Hair',price:15,color:'#f2c85b'},
-  {id:'hair_black',tier:1,slot:'hair',name:'Black Hair',price:15,color:'#2c2238'},
-  {id:'hair_red',tier:2,slot:'hair',name:'Red Hair',price:20,color:'#d1552c'},
-  {id:'hair_pink',tier:3,slot:'hair',name:'Pink Hair',price:30,color:'#ff7fc0'},
-  {id:'hair_purple',tier:4,slot:'hair',name:'Purple Hair',price:30,color:'#9a6cff'},
-  // dresses
-  {id:'dress_simple',slot:'dress',name:'Simple Dress',price:0,svg:dressSVG('#ffd6e8','#ffb3d1','aline')},
-  {id:'dress_rose',tier:1,slot:'dress',name:'Rose Gown',price:30,svg:dressSVG('#ff6fb1','#ffb3d1','ball')},
-  {id:'dress_sky',tier:2,slot:'dress',name:'Sky Gown',price:40,svg:dressSVG('#7fc8ff','#cfeaff','ball')},
-  {id:'dress_mint',tier:2,slot:'dress',name:'Mint Dress',price:45,svg:dressSVG('#7ee8c6','#c9f7e6','aline')},
-  {id:'dress_lilac',tier:3,slot:'dress',name:'Lilac Mermaid',price:60,svg:dressSVG('#b78cff','#e3d4ff','mermaid')},
-  {id:'dress_sun',tier:3,slot:'dress',name:'Sunshine Dress',price:55,svg:dressSVG('#ffd84d','#fff1b8','aline')},
-  {id:'dress_gold',tier:4,slot:'dress',name:'Golden Gown',price:90,svg:dressSVG('#f4b63a','#ffe27a','ball',SPARKS('#fff6c8'))},
-  {id:'dress_rainbow',tier:5,slot:'dress',name:'Rainbow Gown',price:120,svg:dressSVG('url(#rainbow)','rgba(255,255,255,.35)','ball',SPARKS())},
-  {id:'dress_night',tier:5,slot:'dress',name:'Starry Night',price:110,svg:dressSVG('#3b2a7a','#7b5cff','mermaid',SPARKS('#ffe27a'))},
-  // shoes
-  {id:'shoes_pink',tier:1,slot:'shoes',name:'Pink Flats',price:15,svg:`<ellipse cx="104" cy="295" rx="15" ry="7" fill="#ff8fc4"/><ellipse cx="136" cy="295" rx="15" ry="7" fill="#ff8fc4"/>`},
-  {id:'shoes_red',tier:2,slot:'shoes',name:'Red Shoes',price:25,svg:`<ellipse cx="104" cy="295" rx="15" ry="7" fill="#e8334f"/><ellipse cx="136" cy="295" rx="15" ry="7" fill="#e8334f"/><circle cx="104" cy="290" r="3" fill="#fff"/><circle cx="136" cy="290" r="3" fill="#fff"/>`},
-  {id:'shoes_glass',tier:3,slot:'shoes',name:'Glass Slippers',price:35,svg:`<ellipse cx="104" cy="295" rx="15" ry="7" fill="#cfeeff" stroke="#8fd3ff" stroke-width="2"/><ellipse cx="136" cy="295" rx="15" ry="7" fill="#cfeeff" stroke="#8fd3ff" stroke-width="2"/><ellipse cx="100" cy="292" rx="5" ry="2" fill="#fff"/><ellipse cx="132" cy="292" rx="5" ry="2" fill="#fff"/>`},
-  {id:'shoes_gold',tier:4,slot:'shoes',name:'Golden Heels',price:50,svg:`<ellipse cx="104" cy="295" rx="15" ry="7" fill="#f4b63a"/><ellipse cx="136" cy="295" rx="15" ry="7" fill="#f4b63a"/><polygon points="${starPts(104,293,5,2)}" fill="#fff6c8"/><polygon points="${starPts(136,293,5,2)}" fill="#fff6c8"/>`},
-  {id:'shoes_boots',tier:4,slot:'shoes',name:'Purple Boots',price:40,svg:`<rect x="90" y="276" width="28" height="22" rx="8" fill="#9a6cff"/><rect x="122" y="276" width="28" height="22" rx="8" fill="#9a6cff"/><rect x="90" y="276" width="28" height="6" fill="#e3d4ff"/><rect x="122" y="276" width="28" height="6" fill="#e3d4ff"/>`},
-  // head
-  {id:'head_silver',tier:2,slot:'head',name:'Silver Tiara',price:25,svg:`<path d="M90 60 L100 42 L110 56 L120 36 L130 56 L140 42 L150 60 Z" fill="#dfe6f2" stroke="#b9c6dd" stroke-width="2"/><circle cx="120" cy="44" r="4" fill="#ff8fc4"/>`},
-  {id:'head_flower',tier:3,slot:'head',name:'Flower Crown',price:35,svg:[88,100,112,124,136,148].map((x,i)=>`<circle cx="${x}" cy="${52+Math.abs(i-2.5)*3}" r="7" fill="${['#ff8fc4','#ffe27a','#9ef0d9','#ff8fc4','#ffe27a','#b78cff'][i]}"/><circle cx="${x}" cy="${52+Math.abs(i-2.5)*3}" r="2.5" fill="#fff"/>`).join('')},
-  {id:'head_bow',tier:1,slot:'head',name:'Pink Bow',price:15,svg:`<ellipse cx="146" cy="52" rx="12" ry="8" fill="#ff5fa8" transform="rotate(-20 146 52)"/><ellipse cx="166" cy="56" rx="12" ry="8" fill="#ff5fa8" transform="rotate(20 166 56)"/><circle cx="156" cy="55" r="5" fill="#ff8fc4"/>`},
-  {id:'head_gold',tier:4,slot:'head',name:'Gold Crown',price:50,svg:`<path d="M88 62 L92 38 L106 52 L120 30 L134 52 L148 38 L152 62 Z" fill="#f4b63a" stroke="#d99a1e" stroke-width="2"/><circle cx="120" cy="40" r="5" fill="#e8334f"/><circle cx="104" cy="50" r="3.5" fill="#3fa9f5"/><circle cx="136" cy="50" r="3.5" fill="#3fa9f5"/>`},
-  {id:'head_diamond',tier:5,slot:'head',name:'Diamond Tiara',price:80,svg:`<path d="M86 62 L96 40 L108 56 L120 30 L132 56 L144 40 L154 62 Z" fill="#eaf6ff" stroke="#9fd8ff" stroke-width="2"/><polygon points="${starPts(120,42,7,3)}" fill="#7fc8ff"/><circle cx="106" cy="52" r="3" fill="#b78cff"/><circle cx="134" cy="52" r="3" fill="#b78cff"/>`},
-  // earrings
-  {id:'ear_pearl',tier:1,slot:'earrings',name:'Pearl Earrings',price:20,svg:`<circle cx="74" cy="118" r="4.5" fill="#fff" stroke="#ddd" stroke-width="1"/><circle cx="166" cy="118" r="4.5" fill="#fff" stroke="#ddd" stroke-width="1"/>`},
-  {id:'ear_ruby',tier:2,slot:'earrings',name:'Ruby Earrings',price:30,svg:`<polygon points="74,111 80,118 74,126 68,118" fill="#e8334f"/><polygon points="166,111 172,118 166,126 160,118" fill="#e8334f"/>`},
-  {id:'ear_star',tier:4,slot:'earrings',name:'Star Earrings',price:40,svg:`<polygon points="${starPts(74,119,7,3)}" fill="#ffd84d"/><polygon points="${starPts(166,119,7,3)}" fill="#ffd84d"/>`},
-  {id:'ear_heart',tier:3,slot:'earrings',name:'Heart Earrings',price:35,svg:`<path d="M74 124 L67 116 Q67 110 72 111 Q74 112 74 114 Q74 112 76 111 Q81 110 81 116 Z" fill="#ff5fa8"/><path d="M166 124 L159 116 Q159 110 164 111 Q166 112 166 114 Q166 112 168 111 Q173 110 173 116 Z" fill="#ff5fa8"/>`},
-  // necklaces
-  {id:'neck_heart',tier:1,slot:'necklace',name:'Heart Necklace',price:25,svg:`<path d="M102 150 Q120 172 138 150" stroke="#f4b63a" stroke-width="2" fill="none"/><path d="M120 176 L112 167 Q112 160 117 161 Q120 162 120 165 Q120 162 123 161 Q128 160 128 167 Z" fill="#ff5fa8"/>`},
-  {id:'neck_pearls',tier:2,slot:'necklace',name:'Pearl Necklace',price:35,svg:[102,107,112,117,122,127,132,137].map((x,i)=>`<circle cx="${x+0.5}" cy="${150+Math.sin(i/7*Math.PI)*16}" r="3.5" fill="#fff" stroke="#ddd" stroke-width="1"/>`).join('')},
-  {id:'neck_gem',tier:4,slot:'necklace',name:'Gem Necklace',price:55,svg:`<path d="M102 150 Q120 172 138 150" stroke="#dfe6f2" stroke-width="2.5" fill="none"/><polygon points="120,164 128,172 120,182 112,172" fill="#3fa9f5"/><polygon points="120,166 125,172 120,178 115,172" fill="#cfeeff"/>`},
-  // wands
-  {id:'wand_star',tier:1,slot:'wand',name:'Star Wand',price:30,svg:`<line x1="172" y1="212" x2="198" y2="150" stroke="#ff8fc4" stroke-width="5" stroke-linecap="round"/><polygon points="${starPts(200,144,13,6)}" fill="#ffd84d"/>`},
-  {id:'wand_heart',tier:2,slot:'wand',name:'Heart Wand',price:40,svg:`<line x1="172" y1="212" x2="198" y2="150" stroke="#b78cff" stroke-width="5" stroke-linecap="round"/><path d="M200 156 L187 143 Q187 132 196 134 Q200 136 200 140 Q200 136 204 134 Q213 132 213 143 Z" fill="#ff5fa8"/>`},
-  {id:'wand_rainbow',tier:5,slot:'wand',name:'Rainbow Wand',price:70,svg:`<line x1="172" y1="212" x2="198" y2="150" stroke="url(#rainbow)" stroke-width="6" stroke-linecap="round"/><polygon points="${starPts(200,144,14,6)}" fill="#fff"/><polygon points="${starPts(200,144,8,3)}" fill="#ffd84d"/><polygon points="${starPts(186,166,5,2)}" fill="#fff"/><polygon points="${starPts(214,160,5,2)}" fill="#fff"/>`},
-  // pets
-  {id:'pet_cat',tier:3,slot:'pet',name:'Kitty',price:60,img:'img/pet_cat.png'},
-  {id:'pet_dog',tier:3,slot:'pet',name:'Puppy',price:60,img:'img/pet_dog.png'},
-  {id:'pet_bunny',tier:4,slot:'pet',name:'Bunny',price:70,img:'img/pet_bunny.png'},
-  {id:'pet_hamster',tier:2,slot:'pet',name:'Hamster',price:50,img:'img/pet_hamster.png'},
-  {id:'pet_butterfly',tier:4,slot:'pet',name:'Butterfly',price:80,img:'img/pet_butterfly.png'},
-  {id:'pet_unicorn',tier:5,slot:'pet',name:'Unicorn',price:120,img:'img/pet_unicorn.png'},
+  /* ---------- hair ---------- */
+  {id:'hair_brown',slot:'hair',name:'Brown Hair',price:0,tier:1,color:'#6b3e2e'},
+  {id:'hair_blonde',slot:'hair',name:'Golden Hair',price:15,tier:1,color:'#f2c85b'},
+  {id:'hair_black',slot:'hair',name:'Black Hair',price:15,tier:1,color:'#2c2238'},
+  {id:'hair_red',slot:'hair',name:'Red Hair',price:20,tier:2,color:'#d1552c'},
+  {id:'hair_pink',slot:'hair',name:'Pink Hair',price:30,tier:3,color:'#ff7fc0'},
+  {id:'hair_purple',slot:'hair',name:'Purple Hair',price:30,tier:4,color:'#9a6cff'},
+  {id:'hair_blue',slot:'hair',name:'Ocean Hair',price:35,tier:4,color:'#5bb7ff'},
+  {id:'hair_rainbow',slot:'hair',name:'Rainbow Hair',price:90,tier:5,color:'url(#rainbowHair)'},
+  /* ---------- dresses ---------- */
+  {id:'dress_simple',slot:'dress',name:'Simple Dress',price:0,tier:1,svg:dressSVG('#ffd6e8','#ffb3d1','aline')},
+  {id:'dress_rose',slot:'dress',name:'Rose Gown',price:30,tier:1,svg:dressSVG('#ff6fb1','#ffb3d1','ball')},
+  {id:'dress_dots',slot:'dress',name:'Polka Dress',price:25,tier:1,svg:dressSVG('#ff8fc4','#fff','aline',dots('#fff',[[100,230],[130,250],[110,270],[145,280],[90,262],[125,215]]))},
+  {id:'dress_sky',slot:'dress',name:'Sky Gown',price:40,tier:2,svg:dressSVG('#7fc8ff','#cfeaff','ball')},
+  {id:'dress_mint',slot:'dress',name:'Mint Dress',price:45,tier:2,svg:dressSVG('#7ee8c6','#c9f7e6','aline')},
+  {id:'dress_strawberry',slot:'dress',name:'Strawberry Dress',price:50,tier:2,svg:dressSVG('#ff4f7d','#ffd6e8','tutu',dots('#ffe27a',[[100,215],[135,225],[115,235]],2.5))},
+  {id:'dress_sun',slot:'dress',name:'Sunshine Dress',price:55,tier:3,svg:dressSVG('#ffd84d','#fff1b8','aline')},
+  {id:'dress_lilac',slot:'dress',name:'Lilac Mermaid',price:60,tier:3,svg:dressSVG('#b78cff','#e3d4ff','mermaid')},
+  {id:'dress_ballerina',slot:'dress',name:'Ballerina Dress',price:65,tier:3,svg:dressSVG('#ffb3d1','#fff','tutu','',"strap")},
+  {id:'dress_peach',slot:'dress',name:'Peach Gown',price:70,tier:3,svg:dressSVG('#ffb08a','#ffe0c2','ball',SPARKS('#fff3e0'))},
+  {id:'dress_gold',slot:'dress',name:'Golden Gown',price:90,tier:4,svg:dressSVG('#f4b63a','#ffe27a','ball',SPARKS('#fff6c8'))},
+  {id:'dress_ocean',slot:'dress',name:'Ocean Mermaid',price:95,tier:4,svg:dressSVG('#3fa9f5','#7ee8c6','mermaid',SPARKS('#e0ffff'))},
+  {id:'dress_ruby',slot:'dress',name:'Ruby Gown',price:100,tier:4,svg:dressSVG('#d91e4f','#ff8fa8','ball',dots('#ffe27a',[[95,240],[145,236],[120,268],[80,278],[160,280]],3))},
+  {id:'dress_rainbow',slot:'dress',name:'Rainbow Gown',price:120,tier:5,svg:dressSVG('url(#rainbow)','rgba(255,255,255,.35)','ball',SPARKS())},
+  {id:'dress_night',slot:'dress',name:'Starry Night',price:110,tier:5,svg:dressSVG('#3b2a7a','#7b5cff','mermaid',SPARKS('#ffe27a'))},
+  {id:'dress_queen',slot:'dress',name:'Queen Gown',price:160,tier:6,svg:dressSVG('#8a2be2','#f4b63a','ball',SPARKS('#ffe27a')+`<path d="M60 292 L180 292 L176 284 L64 284 Z" fill="#f4b63a"/>`)},
+  /* ---------- tops ---------- */
+  {id:'top_white',slot:'top',name:'White Tee',price:15,tier:1,svg:topSVG('#fff','#ffd6e8','tee')},
+  {id:'top_pink',slot:'top',name:'Pink Puff Top',price:20,tier:1,svg:topSVG('#ff8fc4','#ffd6e8','puff')},
+  {id:'top_heart',slot:'top',name:'Heart Tee',price:25,tier:2,svg:topSVG('#fff','#ff8fc4','tee',`<path d="${heartPath(120,172,10)}" fill="#ff5fa8"/>`)},
+  {id:'top_stripes',slot:'top',name:'Stripy Top',price:30,tier:2,svg:topSVG('#fff','#7fc8ff','long',[158,170,182].map(y=>`<path d="M96 ${y} L144 ${y}" stroke="#7fc8ff" stroke-width="5"/>`).join(''))},
+  {id:'top_sparkle',slot:'top',name:'Sparkle Top',price:45,tier:3,svg:topSVG('#b78cff','#e3d4ff','strap',dots('#fff',[[108,165],[130,160],[118,185],[136,180]],2.5))},
+  {id:'top_rainbow',slot:'top',name:'Rainbow Top',price:60,tier:4,svg:topSVG('url(#rainbow)','#fff','puff')},
+  {id:'top_gold',slot:'top',name:'Golden Top',price:70,tier:4,svg:topSVG('#f4b63a','#ffe27a','long')},
+  {id:'top_star',slot:'top',name:'Star Tee',price:35,tier:3,svg:topSVG('#ffe27a','#ff8fc4','tee',`<polygon points="${starPts(120,172,11,5)}" fill="#ff5fa8"/>`)},
+  /* ---------- skirts ---------- */
+  {id:'skirt_pink',slot:'skirt',name:'Pink Skirt',price:15,tier:1,svg:skirtSVG('#ff8fc4','#ffd6e8','aline')},
+  {id:'skirt_tutu',slot:'skirt',name:'Tutu',price:30,tier:1,svg:skirtSVG('#ffd6e8','#fff','tutu')},
+  {id:'skirt_blue',slot:'skirt',name:'Blue Mini',price:25,tier:2,svg:skirtSVG('#7fc8ff','#cfeaff','mini')},
+  {id:'skirt_pleat',slot:'skirt',name:'Pleated Skirt',price:35,tier:2,svg:skirtSVG('#b78cff','#e3d4ff','pleat')},
+  {id:'skirt_mint',slot:'skirt',name:'Mint Twirl',price:40,tier:3,svg:skirtSVG('#7ee8c6','#c9f7e6','ball')},
+  {id:'skirt_rainbow_tutu',slot:'skirt',name:'Rainbow Tutu',price:70,tier:4,svg:skirtSVG('url(#rainbow)','rgba(255,255,255,.4)','tutu')},
+  {id:'skirt_gold',slot:'skirt',name:'Golden Skirt',price:75,tier:4,svg:skirtSVG('#f4b63a','#ffe27a','pleat',SPARKS('#fff6c8'))},
+  {id:'skirt_star',slot:'skirt',name:'Starry Skirt',price:85,tier:5,svg:skirtSVG('#3b2a7a','#7b5cff','ball',SPARKS('#ffe27a'))},
+  /* ---------- shoes ---------- */
+  {id:'shoes_pink',slot:'shoes',name:'Pink Flats',price:15,tier:1,svg:shoes('#ff8fc4')},
+  {id:'shoes_sneakers',slot:'shoes',name:'Sneakers',price:20,tier:1,svg:shoes('#fff','#ff8fc4')+`<path d="M92 295 L116 295 M124 295 L148 295" stroke="#ff8fc4" stroke-width="3"/>`},
+  {id:'shoes_ballet',slot:'shoes',name:'Ballerina Shoes',price:30,tier:1,svg:ballet('#ffb3d1')},
+  {id:'shoes_red',slot:'shoes',name:'Red Shoes',price:25,tier:2,svg:shoes('#e8334f')},
+  {id:'shoes_rain',slot:'shoes',name:'Rain Boots',price:35,tier:2,svg:boots('#ffd84d','#fff1b8',26)+dots('#ff8fc4',[[98,286],[110,292],[130,286],[142,292]],2.5)},
+  {id:'shoes_glass',slot:'shoes',name:'Glass Slippers',price:35,tier:3,svg:`<ellipse cx="104" cy="295" rx="15" ry="7" fill="#cfeeff" stroke="#8fd3ff" stroke-width="2"/><ellipse cx="136" cy="295" rx="15" ry="7" fill="#cfeeff" stroke="#8fd3ff" stroke-width="2"/><ellipse cx="100" cy="292" rx="5" ry="2" fill="#fff"/><ellipse cx="132" cy="292" rx="5" ry="2" fill="#fff"/>`},
+  {id:'shoes_princess',slot:'shoes',name:'Princess Heels',price:45,tier:3,svg:heels('#ff5fa8','#ffe27a')},
+  {id:'shoes_cowboy',slot:'shoes',name:'Cowboy Boots',price:50,tier:3,svg:boots('#c47a3a','#f4b63a',30)+`<polygon points="${starPts(104,285,5,2)}" fill="#fff"/><polygon points="${starPts(136,285,5,2)}" fill="#fff"/>`},
+  {id:'shoes_boots',slot:'shoes',name:'Purple Boots',price:40,tier:3,svg:boots('#9a6cff','#e3d4ff')},
+  {id:'shoes_gold',slot:'shoes',name:'Golden Heels',price:50,tier:4,svg:heels('#f4b63a','#fff6c8')},
+  {id:'shoes_tall',slot:'shoes',name:'Tall Pink Boots',price:60,tier:4,svg:boots('#ff5fa8','#ffb3d1',44)},
+  {id:'shoes_sparkle',slot:'shoes',name:'Sparkly Boots',price:80,tier:5,svg:boots('#3b2a7a','#7b5cff',36)+dots('#ffe27a',[[98,280],[110,290],[130,280],[142,290],[104,270],[136,270]],2.5)},
+  {id:'shoes_rainbow',slot:'shoes',name:'Rainbow Ballet',price:90,tier:5,svg:ballet('url(#rainbow)')},
+  /* ---------- head ---------- */
+  {id:'head_bow',slot:'head',name:'Pink Bow',price:15,tier:1,svg:`<ellipse cx="146" cy="52" rx="12" ry="8" fill="#ff5fa8" transform="rotate(-20 146 52)"/><ellipse cx="166" cy="56" rx="12" ry="8" fill="#ff5fa8" transform="rotate(20 166 56)"/><circle cx="156" cy="55" r="5" fill="#ff8fc4"/>`},
+  {id:'head_band',slot:'head',name:'Pearl Headband',price:20,tier:1,svg:`<path d="M78 70 Q120 36 162 70" stroke="#fff" stroke-width="5" fill="none"/>`+dots('#ffd6e8',[[90,56],[105,46],[120,42],[135,46],[150,56]],3)},
+  {id:'head_silver',slot:'head',name:'Silver Tiara',price:25,tier:1,svg:tiara('#dfe6f2','#b9c6dd','#ff8fc4')},
+  {id:'head_flower',slot:'head',name:'Flower Crown',price:35,tier:2,svg:[88,100,112,124,136,148].map((x,i)=>`<circle cx="${x}" cy="${52+Math.abs(i-2.5)*3}" r="7" fill="${['#ff8fc4','#ffe27a','#9ef0d9','#ff8fc4','#ffe27a','#b78cff'][i]}"/><circle cx="${x}" cy="${52+Math.abs(i-2.5)*3}" r="2.5" fill="#fff"/>`).join('')},
+  {id:'head_cat',slot:'head',name:'Cat Ears',price:30,tier:2,svg:`<polygon points="84,66 90,36 108,56" fill="#3b2a4a"/><polygon points="156,66 150,36 132,56" fill="#3b2a4a"/><polygon points="88,62 92,44 102,56" fill="#ff8fc4"/><polygon points="152,62 148,44 138,56" fill="#ff8fc4"/>`},
+  {id:'head_bunny',slot:'head',name:'Bunny Ears',price:30,tier:2,svg:`<ellipse cx="100" cy="30" rx="9" ry="26" fill="#fff" stroke="#f0c3dd" stroke-width="2"/><ellipse cx="140" cy="30" rx="9" ry="26" fill="#fff" stroke="#f0c3dd" stroke-width="2"/><ellipse cx="100" cy="32" rx="4" ry="18" fill="#ffb3d1"/><ellipse cx="140" cy="32" rx="4" ry="18" fill="#ffb3d1"/>`},
+  {id:'head_party',slot:'head',name:'Party Hat',price:25,tier:2,svg:`<polygon points="120,6 100,60 140,60" fill="#ff8fc4"/>`+dots('#ffe27a',[[118,30],[112,48],[128,46]],3)+`<circle cx="120" cy="8" r="5" fill="#ffe27a"/>`},
+  {id:'head_sunhat',slot:'head',name:'Sun Hat',price:40,tier:3,svg:`<ellipse cx="120" cy="60" rx="58" ry="12" fill="#ffe27a"/><path d="M90 60 Q92 30 120 30 Q148 30 150 60 Z" fill="#ffd84d"/><path d="M90 58 Q120 50 150 58" stroke="#ff8fc4" stroke-width="5" fill="none"/>`},
+  {id:'head_gold',slot:'head',name:'Gold Crown',price:50,tier:3,svg:`<path d="M88 62 L92 38 L106 52 L120 30 L134 52 L148 38 L152 62 Z" fill="#f4b63a" stroke="#d99a1e" stroke-width="2"/><circle cx="120" cy="40" r="5" fill="#e8334f"/><circle cx="104" cy="50" r="3.5" fill="#3fa9f5"/><circle cx="136" cy="50" r="3.5" fill="#3fa9f5"/>`},
+  {id:'head_butterfly',slot:'head',name:'Butterfly Clip',price:35,tier:3,svg:`<ellipse cx="150" cy="48" rx="10" ry="7" fill="#b78cff" transform="rotate(-30 150 48)"/><ellipse cx="166" cy="56" rx="10" ry="7" fill="#b78cff" transform="rotate(30 166 56)"/><ellipse cx="152" cy="60" rx="7" ry="5" fill="#ff8fc4"/><ellipse cx="164" cy="66" rx="7" ry="5" fill="#ff8fc4"/><line x1="158" y1="48" x2="158" y2="66" stroke="#3b2a4a" stroke-width="2"/>`},
+  {id:'head_halo',slot:'head',name:'Angel Halo',price:45,tier:3,svg:`<ellipse cx="120" cy="34" rx="30" ry="7" fill="none" stroke="#ffe27a" stroke-width="5"/>`},
+  {id:'head_rose',slot:'head',name:'Rose Tiara',price:60,tier:4,svg:tiara('#ff8fc4','#ff5fa8','#fff')+dots('#ff5fa8',[[100,44],[140,44]],4)},
+  {id:'head_hennin',slot:'head',name:'Princess Hat',price:70,tier:4,svg:`<polygon points="130,0 112,62 156,58" fill="#b78cff"/><path d="M130 0 Q170 30 176 90" stroke="#ffd6e8" stroke-width="4" fill="none" opacity=".9"/>`},
+  {id:'head_diamond',slot:'head',name:'Diamond Tiara',price:80,tier:5,svg:`<path d="M86 62 L96 40 L108 56 L120 30 L132 56 L144 40 L154 62 Z" fill="#eaf6ff" stroke="#9fd8ff" stroke-width="2"/><polygon points="${starPts(120,42,7,3)}" fill="#7fc8ff"/><circle cx="106" cy="52" r="3" fill="#b78cff"/><circle cx="134" cy="52" r="3" fill="#b78cff"/>`},
+  {id:'head_queen',slot:'head',name:'Queen Crown',price:140,tier:6,svg:`<path d="M84 64 L84 34 L102 50 L120 22 L138 50 L156 34 L156 64 Z" fill="#f4b63a" stroke="#d99a1e" stroke-width="2"/><rect x="84" y="58" width="72" height="8" fill="#8a2be2"/>`+dots('#e8334f',[[120,34],[96,46],[144,46]],4)+dots('#fff',[[100,62],[120,62],[140,62]],2.5)},
+  /* ---------- earrings ---------- */
+  {id:'ear_pearl',slot:'earrings',name:'Pearl Earrings',price:20,tier:1,svg:`<circle cx="74" cy="118" r="4.5" fill="#fff" stroke="#ddd" stroke-width="1"/><circle cx="166" cy="118" r="4.5" fill="#fff" stroke="#ddd" stroke-width="1"/>`},
+  {id:'ear_ruby',slot:'earrings',name:'Ruby Earrings',price:30,tier:2,svg:`<polygon points="74,111 80,118 74,126 68,118" fill="#e8334f"/><polygon points="166,111 172,118 166,126 160,118" fill="#e8334f"/>`},
+  {id:'ear_heart',slot:'earrings',name:'Heart Earrings',price:35,tier:3,svg:`<path d="${heartPath(74,116,6)}" fill="#ff5fa8"/><path d="${heartPath(166,116,6)}" fill="#ff5fa8"/>`},
+  {id:'ear_hoops',slot:'earrings',name:'Gold Hoops',price:40,tier:3,svg:`<circle cx="74" cy="120" r="7" fill="none" stroke="#f4b63a" stroke-width="3"/><circle cx="166" cy="120" r="7" fill="none" stroke="#f4b63a" stroke-width="3"/>`},
+  {id:'ear_star',slot:'earrings',name:'Star Earrings',price:40,tier:4,svg:`<polygon points="${starPts(74,119,7,3)}" fill="#ffd84d"/><polygon points="${starPts(166,119,7,3)}" fill="#ffd84d"/>`},
+  {id:'ear_drops',slot:'earrings',name:'Diamond Drops',price:70,tier:5,svg:`<line x1="74" y1="112" x2="74" y2="124" stroke="#dfe6f2" stroke-width="2"/><line x1="166" y1="112" x2="166" y2="124" stroke="#dfe6f2" stroke-width="2"/><polygon points="74,122 80,129 74,136 68,129" fill="#7fc8ff"/><polygon points="166,122 172,129 166,136 160,129" fill="#7fc8ff"/>`},
+  /* ---------- necklaces ---------- */
+  {id:'neck_heart',slot:'necklace',name:'Heart Necklace',price:25,tier:1,svg:`<path d="M102 150 Q120 172 138 150" stroke="#f4b63a" stroke-width="2" fill="none"/><path d="${heartPath(120,172,7)}" fill="#ff5fa8"/>`},
+  {id:'neck_pearls',slot:'necklace',name:'Pearl Necklace',price:35,tier:2,svg:[102,107,112,117,122,127,132,137].map((x,i)=>`<circle cx="${x+0.5}" cy="${150+Math.sin(i/7*Math.PI)*16}" r="3.5" fill="#fff" stroke="#ddd" stroke-width="1"/>`).join('')},
+  {id:'neck_star',slot:'necklace',name:'Star Necklace',price:40,tier:3,svg:`<path d="M102 150 Q120 172 138 150" stroke="#dfe6f2" stroke-width="2" fill="none"/><polygon points="${starPts(120,174,8,3.5)}" fill="#ffd84d"/>`},
+  {id:'neck_gem',slot:'necklace',name:'Gem Necklace',price:55,tier:4,svg:`<path d="M102 150 Q120 172 138 150" stroke="#dfe6f2" stroke-width="2.5" fill="none"/><polygon points="120,164 128,172 120,182 112,172" fill="#3fa9f5"/><polygon points="120,166 125,172 120,178 115,172" fill="#cfeeff"/>`},
+  {id:'neck_rainbow',slot:'necklace',name:'Rainbow Beads',price:65,tier:5,svg:[102,107,112,117,122,127,132,137].map((x,i)=>`<circle cx="${x+0.5}" cy="${150+Math.sin(i/7*Math.PI)*16}" r="4" fill="${['#ff6fb1','#ffd84d','#7ee8c6','#7fc8ff','#b78cff','#ff6fb1','#ffd84d','#7ee8c6'][i]}"/>`).join('')},
+  /* ---------- glasses ---------- */
+  {id:'glass_sun',slot:'glasses',name:'Sunglasses',price:20,tier:1,svg:glasses('#3b2a4a','round','#3b2a4a')},
+  {id:'glass_heart',slot:'glasses',name:'Heart Shades',price:30,tier:2,svg:glasses('#ff5fa8','heart','#ff8fc4')},
+  {id:'glass_cat',slot:'glasses',name:'Cat-Eye Shades',price:35,tier:3,svg:glasses('#9a6cff','cat','#b78cff')},
+  {id:'glass_star',slot:'glasses',name:'Star Shades',price:45,tier:3,svg:glasses('#f4b63a','star','#ffd84d')},
+  {id:'glass_round',slot:'glasses',name:'Rainbow Rounds',price:55,tier:4,svg:glasses('#3b2a4a','round','url(#rainbow)')},
+  {id:'glass_diamond',slot:'glasses',name:'Diamond Shades',price:75,tier:5,svg:glasses('#9fd8ff','cat','#cfeeff')},
+  /* ---------- bags ---------- */
+  {id:'bag_pink',slot:'bag',name:'Pink Purse',price:20,tier:1,svg:bag(`<rect x="50" y="238" width="26" height="20" rx="7" fill="#ff8fc4"/><circle cx="63" cy="248" r="3" fill="#fff"/>`,'#ff5fa8')},
+  {id:'bag_heart',slot:'bag',name:'Heart Bag',price:30,tier:2,svg:bag(`<path d="${heartPath(62,246,14)}" fill="#ff5fa8"/>`,'#ff5fa8')},
+  {id:'bag_basket',slot:'bag',name:'Flower Basket',price:35,tier:2,svg:bag(`<path d="M48 240 L78 240 L74 260 L52 260 Z" fill="#c47a3a"/>`+dots('#ff8fc4',[[55,238],[63,235],[71,238]],4)+dots('#ffe27a',[[59,236],[67,236]],2.5),'#c47a3a')},
+  {id:'bag_star',slot:'bag',name:'Star Bag',price:40,tier:3,svg:bag(`<polygon points="${starPts(62,248,16,7)}" fill="#ffd84d"/>`,'#f4b63a')},
+  {id:'bag_unicorn',slot:'bag',name:'Unicorn Bag',price:55,tier:4,svg:bag(`<rect x="48" y="238" width="30" height="22" rx="9" fill="#e3d4ff"/><polygon points="63,228 59,240 67,240" fill="#ffd84d"/><circle cx="58" cy="248" r="2" fill="#3b2a4a"/><circle cx="68" cy="248" r="2" fill="#3b2a4a"/>`,'#b78cff')},
+  {id:'bag_rainbow',slot:'bag',name:'Rainbow Bag',price:60,tier:4,svg:bag(`<rect x="48" y="236" width="30" height="24" rx="8" fill="url(#rainbow)"/><rect x="52" y="240" width="22" height="4" rx="2" fill="#fff" opacity=".7"/>`,'#ff5fa8')},
+  {id:'bag_gold',slot:'bag',name:'Golden Clutch',price:80,tier:5,svg:bag(`<rect x="48" y="240" width="30" height="18" rx="6" fill="#f4b63a"/><circle cx="63" cy="249" r="3" fill="#e8334f"/>`,'#f4b63a')},
+  /* ---------- wands ---------- */
+  {id:'wand_star',slot:'wand',name:'Star Wand',price:30,tier:1,svg:`<line x1="172" y1="212" x2="198" y2="150" stroke="#ff8fc4" stroke-width="5" stroke-linecap="round"/><polygon points="${starPts(200,144,13,6)}" fill="#ffd84d"/>`},
+  {id:'wand_heart',slot:'wand',name:'Heart Wand',price:40,tier:2,svg:`<line x1="172" y1="212" x2="198" y2="150" stroke="#b78cff" stroke-width="5" stroke-linecap="round"/><path d="${heartPath(200,147,12)}" fill="#ff5fa8"/>`},
+  {id:'wand_flower',slot:'wand',name:'Flower Wand',price:45,tier:3,svg:`<line x1="172" y1="212" x2="198" y2="150" stroke="#7ee8c6" stroke-width="5" stroke-linecap="round"/>`+[0,72,144,216,288].map(a=>`<circle cx="${(200+9*Math.cos(a*Math.PI/180)).toFixed(1)}" cy="${(144+9*Math.sin(a*Math.PI/180)).toFixed(1)}" r="6" fill="#ff8fc4"/>`).join('')+`<circle cx="200" cy="144" r="5" fill="#ffe27a"/>`},
+  {id:'wand_moon',slot:'wand',name:'Moon Wand',price:60,tier:4,svg:`<line x1="172" y1="212" x2="198" y2="150" stroke="#3b2a7a" stroke-width="5" stroke-linecap="round"/><path d="M206 132 A14 14 0 1 0 206 158 A10 10 0 1 1 206 132 Z" fill="#ffe27a"/>`},
+  {id:'wand_rainbow',slot:'wand',name:'Rainbow Wand',price:70,tier:5,svg:`<line x1="172" y1="212" x2="198" y2="150" stroke="url(#rainbow)" stroke-width="6" stroke-linecap="round"/><polygon points="${starPts(200,144,14,6)}" fill="#fff"/><polygon points="${starPts(200,144,8,3)}" fill="#ffd84d"/><polygon points="${starPts(186,166,5,2)}" fill="#fff"/><polygon points="${starPts(214,160,5,2)}" fill="#fff"/>`},
+  /* ---------- pets ---------- */
+  {id:'pet_hamster',slot:'pet',name:'Hamster',price:50,tier:2,img:PET('pet_hamster')},
+  {id:'pet_bird',slot:'pet',name:'Birdie',price:45,tier:2,img:PET('pet_bird')},
+  {id:'pet_cat',slot:'pet',name:'Kitty',price:60,tier:3,img:PET('pet_cat')},
+  {id:'pet_dog',slot:'pet',name:'Puppy',price:60,tier:3,img:PET('pet_dog')},
+  {id:'pet_turtle',slot:'pet',name:'Turtle',price:55,tier:3,img:PET('pet_turtle')},
+  {id:'pet_bunny',slot:'pet',name:'Bunny',price:70,tier:4,img:PET('pet_bunny')},
+  {id:'pet_lamb',slot:'pet',name:'Lamb',price:75,tier:4,img:PET('pet_lamb')},
+  {id:'pet_butterfly',slot:'pet',name:'Butterfly',price:80,tier:4,img:PET('pet_butterfly')},
+  {id:'pet_dolphin',slot:'pet',name:'Dolphin',price:110,tier:5,img:PET('pet_dolphin')},
+  {id:'pet_unicorn',slot:'pet',name:'Unicorn',price:120,tier:5,img:PET('pet_unicorn')},
+  /* ---------- rides (big rewards) ---------- */
+  {id:'ride_pony',slot:'ride',name:'Pony',price:150,tier:4,img:PET('ride_pony')},
+  {id:'ride_horse',slot:'ride',name:'Royal Horse',price:220,tier:5,img:PET('ride_horse')},
+  {id:'ride_carriage',slot:'ride',name:'Pumpkin Carriage',price:300,tier:6,svg:`<g transform="translate(150 196) scale(.95)"><ellipse cx="46" cy="60" rx="44" ry="40" fill="#ff9f43"/><path d="M14 30 Q46 10 78 30" stroke="#f4b63a" stroke-width="5" fill="none"/><path d="M30 20 Q46 8 62 20" stroke="#f4b63a" stroke-width="4" fill="none"/><rect x="28" y="42" width="36" height="30" rx="12" fill="#ffe27a"/><rect x="34" y="48" width="24" height="18" rx="8" fill="#cfeeff"/><circle cx="18" cy="98" r="12" fill="#f4b63a"/><circle cx="74" cy="98" r="12" fill="#f4b63a"/><circle cx="18" cy="98" r="4" fill="#fff"/><circle cx="74" cy="98" r="4" fill="#fff"/><path d="M46 20 L46 8 M40 10 Q46 2 52 10" stroke="#2e8b57" stroke-width="4" fill="none"/></g>`},
+  /* ---------- places (backdrops, big rewards) ---------- */
+  {id:'place_garden',slot:'place',name:'Flower Garden',price:120,tier:4,bg:`<ellipse cx="120" cy="330" rx="200" ry="70" fill="#9ef0d9"/>`+[[20,262],[46,284],[208,262],[228,286],[196,290]].map(([x,y])=>`<circle cx="${x}" cy="${y}" r="7" fill="#ff8fc4"/><circle cx="${x}" cy="${y}" r="3" fill="#ffe27a"/>`).join('')},
+  {id:'place_beach',slot:'place',name:'Sunny Beach',price:150,tier:4,bg:`<rect x="0" y="0" width="240" height="320" fill="#bfe3ff"/><circle cx="200" cy="40" r="22" fill="#ffd84d"/><path d="M0 230 Q60 215 120 230 T240 230 L240 320 L0 320 Z" fill="#7fc8ff"/><ellipse cx="120" cy="330" rx="200" ry="60" fill="#ffe8b8"/>`},
+  {id:'place_rainbow',slot:'place',name:'Rainbow Sky',price:200,tier:5,bg:`<rect x="0" y="0" width="240" height="320" fill="#dff3ff"/>`+['#ff6fb1','#ffd84d','#7ee8c6','#7fc8ff','#b78cff'].map((c,i)=>`<path d="M-20 240 A140 140 0 0 1 260 240" stroke="${c}" stroke-width="12" fill="none" transform="translate(0 ${-i*12})" opacity=".85"/>`).join('')+`<ellipse cx="40" cy="60" rx="26" ry="14" fill="#fff"/><ellipse cx="200" cy="90" rx="30" ry="15" fill="#fff"/>`},
+  {id:'place_night',slot:'place',name:'Starry Night',price:220,tier:5,bg:`<rect x="0" y="0" width="240" height="320" fill="#3b2a7a"/>`+[[20,30],[60,70],[110,20],[170,50],[220,24],[200,120],[30,150],[230,180],[90,120]].map(([x,y])=>`<polygon points="${starPts(x,y,5,2)}" fill="#ffe27a"/>`).join('')+`<path d="M206 70 A22 22 0 1 0 206 114 A16 16 0 1 1 206 70 Z" fill="#fff1b8"/>`},
+  {id:'place_castle',slot:'place',name:'Royal Castle',price:400,tier:6,bg:`<rect x="0" y="0" width="240" height="320" fill="#ffd9ec"/><image href="img/place_castle.png" x="110" y="20" width="150" height="150" opacity=".95"/><ellipse cx="120" cy="330" rx="200" ry="70" fill="#9ef0d9"/>`},
 ];
+const SLOTS=[['dress','👗','Dresses'],['top','👚','Tops'],['skirt','🩳','Skirts'],['shoes','👠','Shoes'],['head','👑','Head'],['glasses','🕶️','Glasses'],['bag','👜','Bags'],['earrings','💎','Earrings'],['necklace','📿','Necklaces'],['wand','🪄','Wands'],['hair','💇‍♀️','Hair'],['pet','🐱','Pets'],['ride','🐴','Rides'],['place','🏰','Places']];
+const ITEM={}; ITEMS.forEach(i=>ITEM[i.id]=i);
 /* shop tiers: simple things first, fancier things as she finishes worlds */
-const TIERS=[null,{req:[],label:''},{req:['castle'],label:'Finish 🏰 level 1'},{req:['meadow'],label:'Finish 🦄 level 1'},{req:['icecream'],label:'Finish 🍦 level 1'},{req:['families','sounds'],label:'Finish 🌈 + 🧁 level 1'}];
+const TIERS=[null,{req:[],label:''},{req:['castle'],label:'Finish 🏰 level 1'},{req:['meadow'],label:'Finish 🦄 level 1'},{req:['icecream'],label:'Finish 🍦 level 1'},{req:['families','sounds'],label:'Finish 🌈 + 🧁 level 1'},{req:['forest','lagoon'],label:'Finish 🍭 + 🧜‍♀️ level 1'}];
 function tierOpen(t){ const T=TIERS[t||1]; return state.unlockedAll || T.req.every(id=>wstate(id).lvl>=1); }
 function itemOpen(it){ return it.price===0 || tierOpen(it.tier||1); }
-const SLOTS=[['dress','👗','Dresses'],['head','👑','Tiaras'],['shoes','👠','Shoes'],['earrings','💎','Earrings'],['necklace','📿','Necklaces'],['wand','🪄','Wands'],['hair','💇‍♀️','Hair'],['pet','🦄','Pets']];
-const ITEM={}; ITEMS.forEach(i=>ITEM[i.id]=i);
 function shopState(){ return state.shop || (state.shop={owned:['hair_brown','dress_simple'],equipped:{hair:'hair_brown',dress:'dress_simple'},spent:0}); }
 function wallet(){ return totalStars()-shopState().spent; }
 function princessSVG(eq,cls=''){
-  const hair=(ITEM[eq.hair]||ITEM.hair_brown).color, dress=(ITEM[eq.dress]||ITEM.dress_simple).svg;
+  const hair=(ITEM[eq.hair]||ITEM.hair_brown).color;
   const layer=slot=>{ const it=ITEM[eq[slot]]; return it&&it.svg?it.svg:''; };
-  const pet=ITEM[eq.pet]; const petSVG=pet?`<image href="${pet.img}" x="4" y="222" width="76" height="76"/>`:'';
+  const img=(slot,x,y,w)=>{ const it=ITEM[eq[slot]]; return it&&it.img?`<image href="${it.img}" x="${x}" y="${y}" width="${w}" height="${w}"/>`:''; };
+  const place=ITEM[eq.place]; const bg=place&&place.bg?place.bg:'';
+  /* outfit: a full dress, or a top + skirt mix (plain pieces fill in whatever is missing) */
+  let outfit;
+  if(eq.top||eq.skirt){ outfit=(ITEM[eq.top]?ITEM[eq.top].svg:topSVG('#fff','#ffd6e8','tee'))+(ITEM[eq.skirt]?ITEM[eq.skirt].svg:skirtSVG('#ffd6e8','#ffb3d1','aline')); }
+  else outfit=(ITEM[eq.dress]||ITEM.dress_simple).svg;
   return `<svg class="princess ${cls}" viewBox="0 0 240 320" xmlns="http://www.w3.org/2000/svg">
-  <defs><linearGradient id="rainbow" gradientUnits="userSpaceOnUse" x1="0" y1="140" x2="0" y2="292"><stop offset="0" stop-color="#ff6fb1"/><stop offset=".25" stop-color="#ffd84d"/><stop offset=".5" stop-color="#7ee8c6"/><stop offset=".75" stop-color="#7fc8ff"/><stop offset="1" stop-color="#b78cff"/></linearGradient></defs>
+  <defs><linearGradient id="rainbow" gradientUnits="userSpaceOnUse" x1="0" y1="140" x2="0" y2="292"><stop offset="0" stop-color="#ff6fb1"/><stop offset=".25" stop-color="#ffd84d"/><stop offset=".5" stop-color="#7ee8c6"/><stop offset=".75" stop-color="#7fc8ff"/><stop offset="1" stop-color="#b78cff"/></linearGradient><linearGradient id="rainbowHair" gradientUnits="userSpaceOnUse" x1="0" y1="44" x2="0" y2="206"><stop offset="0" stop-color="#ff6fb1"/><stop offset=".3" stop-color="#ffd84d"/><stop offset=".55" stop-color="#7ee8c6"/><stop offset=".8" stop-color="#7fc8ff"/><stop offset="1" stop-color="#b78cff"/></linearGradient><clipPath id="frame"><rect x="0" y="0" width="240" height="320" rx="24"/></clipPath></defs>
+  <g clip-path="url(#frame)">${bg}</g>
+  ${layer('ride')}${img('ride',150,196,96)}
   <ellipse cx="120" cy="300" rx="90" ry="10" fill="rgba(120,40,100,.12)"/>
   <path d="M76 84 Q66 170 88 206 L152 206 Q174 170 164 84 Z" fill="${hair}"/>
   <rect x="111" y="128" width="18" height="22" rx="6" fill="${SKIN_D}"/>
+  <rect x="100" y="200" width="17" height="94" rx="8" fill="${SKIN}"/><rect x="123" y="200" width="17" height="94" rx="8" fill="${SKIN}"/>
   <path d="M92 156 Q70 186 72 214" stroke="${SKIN}" stroke-width="13" fill="none" stroke-linecap="round"/>
   <path d="M148 156 Q170 186 168 214" stroke="${SKIN}" stroke-width="13" fill="none" stroke-linecap="round"/>
-  ${dress}
+  ${outfit}
   <circle cx="72" cy="216" r="8" fill="${SKIN}"/><circle cx="168" cy="216" r="8" fill="${SKIN}"/>
-  ${layer('shoes')}${layer('necklace')}${layer('wand')}
+  ${layer('shoes')}${layer('necklace')}${layer('wand')}${layer('bag')}
   <circle cx="73" cy="104" r="9" fill="${SKIN}"/><circle cx="167" cy="104" r="9" fill="${SKIN}"/>
   <circle cx="120" cy="92" r="47" fill="${SKIN}"/>
   <ellipse cx="103" cy="96" rx="7" ry="9.5" fill="#3b2a4a"/><ellipse cx="137" cy="96" rx="7" ry="9.5" fill="#3b2a4a"/>
@@ -713,8 +827,8 @@ function princessSVG(eq,cls=''){
   <circle cx="92" cy="112" r="7" fill="#ffb3c6" opacity=".7"/><circle cx="148" cy="112" r="7" fill="#ffb3c6" opacity=".7"/>
   <path d="M108 118 Q120 130 132 118" stroke="#c2456f" stroke-width="3" fill="none" stroke-linecap="round"/>
   <path d="M73 92 Q76 44 120 44 Q164 44 167 92 Q154 64 128 70 Q110 66 96 74 Q82 80 73 92 Z" fill="${hair}"/>
-  ${layer('earrings')}${layer('head')}
-  ${petSVG}
+  ${layer('glasses')}${layer('earrings')}${layer('head')}
+  ${img('pet',4,222,76)}
   </svg>`;
 }
 let shopTab='dress';
@@ -722,27 +836,35 @@ function renderShop(){
   const sh=shopState();
   $('shopPrincess').innerHTML=princessSVG(sh.equipped,'big');
   $('shopWallet').textContent=wallet();
-  $('shopTabs').innerHTML=SLOTS.map(([id,em,name])=>`<button class="tab ${shopTab===id?'on':''}" data-slot="${id}">${em}<small>${name}</small></button>`).join('');
+  $('shopTabs').innerHTML=SLOTS.map(([id,em,name])=>{ const n=ITEMS.filter(i=>i.slot===id&&itemOpen(i)&&!sh.owned.includes(i.id)&&wallet()>=i.price).length; return `<button class="tab ${shopTab===id?'on':''}" data-slot="${id}">${em}<small>${name}</small>${n?`<b class="badge">${n}</b>`:''}</button>`; }).join('');
   $('shopTabs').querySelectorAll('.tab').forEach(b=>b.onclick=()=>{ shopTab=b.dataset.slot; sfx.tap(); renderShop(); $('shopItems').scrollTop=0; b.scrollIntoView({inline:'center',block:'nearest',behavior:'smooth'}); });
   const grid=$('shopItems'); grid.innerHTML='';
-  ITEMS.filter(i=>i.slot===shopTab).sort((a,b)=>(itemOpen(b)-itemOpen(a))||(a.tier||1)-(b.tier||1)).forEach(it=>{
+  ITEMS.filter(i=>i.slot===shopTab).sort((a,b)=>(itemOpen(b)-itemOpen(a))||(a.tier||1)-(b.tier||1)||a.price-b.price).forEach(it=>{
     const owned=sh.owned.includes(it.id), wearing=sh.equipped[it.slot]===it.id, can=wallet()>=it.price, open=itemOpen(it);
     const card=document.createElement('button'); card.className='item'+(wearing?' wearing':owned?' owned':!open?' locked':can?' can':' cant');
     const preview=Object.assign({},sh.equipped,{[it.slot]:it.id});
+    if(it.slot==='dress'){ delete preview.top; delete preview.skirt; } if(it.slot==='top'||it.slot==='skirt') delete preview.dress;
     card.innerHTML=`<div class="pv">${princessSVG(preview)}</div><div class="iname">${it.name}</div><div class="iprice">${wearing?'✅ Wearing':owned?'👗 Wear':!open?'🔒 '+it.price:`⭐ ${it.price}`}</div>${!open?`<div class="ireq">${TIERS[it.tier].label}</div>`:''}`;
     card.onclick=()=>tapItem(it,card);
     grid.appendChild(card);
   });
 }
+function equip(sh,it){
+  sh.equipped[it.slot]=it.id;
+  if(it.slot==='dress'){ delete sh.equipped.top; delete sh.equipped.skirt; }
+  if(it.slot==='top'||it.slot==='skirt') delete sh.equipped.dress;
+}
 function tapItem(it,card){
   const sh=shopState(); const owned=sh.owned.includes(it.id);
   if(owned){
-    if(sh.equipped[it.slot]===it.id && it.price>0 && !['hair','dress'].includes(it.slot)){ delete sh.equipped[it.slot]; } else sh.equipped[it.slot]=it.id;
+    const removable=!['hair','dress'].includes(it.slot);
+    if(sh.equipped[it.slot]===it.id && removable){ delete sh.equipped[it.slot]; if(!sh.equipped.top&&!sh.equipped.skirt&&!sh.equipped.dress) sh.equipped.dress='dress_simple'; }
+    else equip(sh,it);
     sfx.tap(); save(); renderShop(); return;
   }
   if(!itemOpen(it)){ sfx.wrong(); card.classList.add('wrong'); setTimeout(()=>card.classList.remove('wrong'),400); sayPhrase('p_locked','Not yet! Finish more words to unlock it!'); return; }
   if(wallet()<it.price){ sfx.wrong(); card.classList.add('wrong'); setTimeout(()=>card.classList.remove('wrong'),400); sayPhrase('p_need','You need more stars. Keep spelling!'); return; }
-  sh.spent+=it.price; sh.owned.push(it.id); sh.equipped[it.slot]=it.id; save();
+  sh.spent+=it.price; sh.owned.push(it.id); equip(sh,it); save();
   sfx.sticker(); confetti(50); sayPhrase('p_buy','Beautiful! She loves it!'); renderShop();
 }
 function openShop(tab){ if(tab) shopTab=tab; renderShop(); show('shop'); sayPhrase('p_shop','Welcome to the princess shop!'); }
@@ -762,7 +884,7 @@ function renderParent(){
   $('customWorld').innerHTML=WORLDS.map(w=>`<option value="${w.id}">${w.emoji} ${w.name}</option>`).join('');
   $('customList').innerHTML=state.custom.map((c,i)=>`<span class="chip">${c.emoji} ${c.word} <button data-i="${i}">✕</button></span>`).join('');
   $('customList').querySelectorAll('button').forEach(b=>b.onclick=()=>{ state.custom.splice(+b.dataset.i,1); save(); renderParent(); });
-  $('shopNote').textContent=`כוכבים לבזבוז: ${wallet()} · פריטים בארון: ${shopState().owned.length} מתוך ${ITEMS.length} · הוצאו עד היום: ${shopState().spent} כוכבים. פריטים פתוחים לקנייה: ${ITEMS.filter(itemOpen).length}. החנות נפתחת בשלבים: פריטים פשוטים מההתחלה, ואחרי סיום רמה 1 בטירה, ביוניקורנים, בגלידה ובמשפחות+צלילים נפתחים דברים מפוארים יותר.`;
+  $('shopNote').textContent=`כוכבים לבזבוז: ${wallet()} · פריטים בארון: ${shopState().owned.length} מתוך ${ITEMS.length} · הוצאו עד היום: ${shopState().spent} כוכבים. פריטים פתוחים לקנייה: ${ITEMS.filter(itemOpen).length}. החנות נפתחת בשלבים: פריטים פשוטים מההתחלה, ואחרי סיום רמה 1 בטירה, ביוניקורנים, בגלידה, במשפחות+צלילים וביער+לגונה נפתחים דברים מפוארים יותר, עד כרכרה וטירה.`;
   fillVoiceSelect(); renderDiag();
 }
 
