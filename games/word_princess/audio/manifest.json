@@ -127,5 +127,7 @@
 "p_stars": "Great job! You earned stars! Let's dress up the princess!",
 "p_buy": "Beautiful! She loves it!",
 "p_need": "You need more stars. Keep spelling!",
-"p_shop": "Welcome to the princess shop!"
+"p_shop": "Welcome to the princess shop!",
+"p_locked": "Not yet! Finish more words to unlock it!",
+"p_newitems": "New things are waiting in the princess shop!"
 }

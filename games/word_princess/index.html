@@ -160,6 +160,9 @@ button:active{transform:scale(.95)}
 .item.cant .iprice{color:var(--ink-soft)}
 .item.can::after{content:'🛒';position:absolute;top:4px;right:6px;font-size:16px}
 .item.wrong{animation:shake .4s}
+.item.locked .pv{filter:grayscale(.9) opacity(.45)}
+.item.locked .iprice{color:var(--ink-soft);background:#f3e4ee}
+.item .ireq{font-size:11px;font-weight:700;color:var(--ink-soft);text-align:center;line-height:1.1}
 .bigsticker .princess{width:170px}
 .bookgrid{display:none}
 .sticker{aspect-ratio:1;background:var(--card);border-radius:22px;display:grid;place-items:center;font-size:44px;box-shadow:var(--shadow)}
@@ -430,7 +433,7 @@ function speak(text,{rate=0.85,pitch=1.15,cancel=true}={}){
 /* Safari sometimes wedges in the "speaking" state; unstick it. */
 setInterval(()=>{ try{ if(speechLog.supported && speechSynthesis.paused) speechSynthesis.resume(); }catch(e){} },3000);
 /* ---- bundled voice clips (audio/*.mp3), played through Web Audio; the phone's own voice is only a fallback ---- */
-const CLIPS=new Set(["l_a", "l_b", "l_c", "l_d", "l_e", "l_f", "l_g", "l_h", "l_i", "l_j", "l_k", "l_l", "l_m", "l_n", "l_o", "l_p", "l_q", "l_r", "l_s", "l_t", "l_u", "l_v", "l_w", "l_x", "l_y", "l_z", "p_amazing", "p_buy", "p_challenge", "p_champion", "p_families", "p_finish", "p_great", "p_hello", "p_level2", "p_level3", "p_level4", "p_listen", "p_need", "p_sentences", "p_shop", "p_sounds", "p_spell", "p_stars", "p_sticker", "w_a", "w_am", "w_ant", "w_bag", "w_bat", "w_bath", "w_bear", "w_bed", "w_bee", "w_bell", "w_big", "w_bird", "w_book", "w_boot", "w_box", "w_bus", "w_cake", "w_can", "w_car", "w_cat", "w_chair", "w_cheese", "w_chick", "w_cold", "w_cow", "w_cream", "w_cup", "w_dog", "w_duck", "w_ear", "w_egg", "w_eye", "w_fish", "w_fox", "w_frog", "w_hat", "w_hen", "w_hot", "w_i", "w_i_am_cold", "w_i_am_hot", "w_i_can_run", "w_i_like_cake", "w_i_like_ice_cream", "w_i_like_milk", "w_i_like_pink", "w_i_see_a_dog", "w_i_see_a_star", "w_i_see_mom", "w_ice", "w_is", "w_key", "w_kite", "w_like", "w_lion", "w_log", "w_man", "w_milk", "w_mom", "w_moon", "w_owl", "w_pan", "w_pen", "w_pig", "w_pink", "w_ring", "w_run", "w_sea", "w_see", "w_sheep", "w_shell", "w_ship", "w_sock", "w_spoon", "w_star", "w_sun", "w_ten", "w_the", "w_the_pig_is_pink", "w_the_sun_is_hot", "w_three", "w_tooth", "w_tree", "w_van"]);
+const CLIPS=new Set(["l_a", "l_b", "l_c", "l_d", "l_e", "l_f", "l_g", "l_h", "l_i", "l_j", "l_k", "l_l", "l_m", "l_n", "l_o", "l_p", "l_q", "l_r", "l_s", "l_t", "l_u", "l_v", "l_w", "l_x", "l_y", "l_z", "p_amazing", "p_buy", "p_challenge", "p_champion", "p_families", "p_finish", "p_great", "p_hello", "p_level2", "p_level3", "p_level4", "p_listen", "p_locked", "p_need", "p_newitems", "p_sentences", "p_shop", "p_sounds", "p_spell", "p_stars", "p_sticker", "w_a", "w_am", "w_ant", "w_bag", "w_bat", "w_bath", "w_bear", "w_bed", "w_bee", "w_bell", "w_big", "w_bird", "w_book", "w_boot", "w_box", "w_bus", "w_cake", "w_can", "w_car", "w_cat", "w_chair", "w_cheese", "w_chick", "w_cold", "w_cow", "w_cream", "w_cup", "w_dog", "w_duck", "w_ear", "w_egg", "w_eye", "w_fish", "w_fox", "w_frog", "w_hat", "w_hen", "w_hot", "w_i", "w_i_am_cold", "w_i_am_hot", "w_i_can_run", "w_i_like_cake", "w_i_like_ice_cream", "w_i_like_milk", "w_i_like_pink", "w_i_see_a_dog", "w_i_see_a_star", "w_i_see_mom", "w_ice", "w_is", "w_key", "w_kite", "w_like", "w_lion", "w_log", "w_man", "w_milk", "w_mom", "w_moon", "w_owl", "w_pan", "w_pen", "w_pig", "w_pink", "w_ring", "w_run", "w_sea", "w_see", "w_sheep", "w_shell", "w_ship", "w_sock", "w_spoon", "w_star", "w_sun", "w_ten", "w_the", "w_the_pig_is_pink", "w_the_sun_is_hot", "w_three", "w_tooth", "w_tree", "w_van"]);
 const clipCache={}; let playing=[], playGen=0; const clipLog={loaded:0, errors:[]};
 function clipKey(text){ return 'w_'+text.toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,''); }
 function ensureCtx(){ actx = actx || new (window.AudioContext||window.webkitAudioContext)(); if(actx.state==='suspended') actx.resume(); return actx; }
@@ -606,12 +609,13 @@ function endRound(){
     show('reward'); sfx.sticker(); confetti(90); sayPhrase('p_champion','You did it! You are a princess champion!'); return;
   }
   const ws=wstate(G.w.id); ws.rounds++; ws.lastRound=G.items.map(x=>x.t);
-  let levelUp=false; if(doneCount(G.w)>=needCount(G.w) && ws.lvl<3){ ws.lvl++; levelUp=true; }
+  let levelUp=false, newItems=false; if(doneCount(G.w)>=needCount(G.w) && ws.lvl<3){ const before=TIERS.filter((T,t)=>t&&tierOpen(t)).length; ws.lvl++; levelUp=true; newItems=TIERS.filter((T,t)=>t&&tierOpen(t)).length>before; }
   save();
   $('bigsticker').innerHTML=levelUp?'<img src="img/trophy.png" alt="">':princessSVG(shopState().equipped,'big');
   $('rewardStars').textContent='+'+G.stars+' ⭐'; $('rewardWallet').textContent=wallet();
-  $('rewardTitle').textContent=levelUp?`Level ${ws.lvl+1}!`:'You earned stars!';
+  $('rewardTitle').textContent=newItems?`Level ${ws.lvl+1}! New shop items! 🎁`:levelUp?`Level ${ws.lvl+1}!`:'You earned stars!';
   show('reward'); sfx.sticker(); confetti(70);
+  if(newItems) setTimeout(()=>sayPhrase('p_newitems','New things are waiting in the princess shop!'),2600);
   if(levelUp) sayPhrase('p_level'+(ws.lvl+1),`Level up! Welcome to level ${ws.lvl+1}!`); else sayPhrase('p_stars',"Great job! You earned stars! Let's dress up the princess!");
 }
 
@@ -631,54 +635,58 @@ const SPARKS=(c='#fff')=>[[80,250],[150,230],[110,275],[165,278],[70,215]].map((
 const ITEMS=[
   // hair colours
   {id:'hair_brown',slot:'hair',name:'Brown Hair',price:0,color:'#6b3e2e'},
-  {id:'hair_blonde',slot:'hair',name:'Golden Hair',price:15,color:'#f2c85b'},
-  {id:'hair_black',slot:'hair',name:'Black Hair',price:15,color:'#2c2238'},
-  {id:'hair_red',slot:'hair',name:'Red Hair',price:20,color:'#d1552c'},
-  {id:'hair_pink',slot:'hair',name:'Pink Hair',price:30,color:'#ff7fc0'},
-  {id:'hair_purple',slot:'hair',name:'Purple Hair',price:30,color:'#9a6cff'},
+  {id:'hair_blonde',tier:1,slot:'hair',name:'Golden Hair',price:15,color:'#f2c85b'},
+  {id:'hair_black',tier:1,slot:'hair',name:'Black Hair',price:15,color:'#2c2238'},
+  {id:'hair_red',tier:2,slot:'hair',name:'Red Hair',price:20,color:'#d1552c'},
+  {id:'hair_pink',tier:3,slot:'hair',name:'Pink Hair',price:30,color:'#ff7fc0'},
+  {id:'hair_purple',tier:4,slot:'hair',name:'Purple Hair',price:30,color:'#9a6cff'},
   // dresses
   {id:'dress_simple',slot:'dress',name:'Simple Dress',price:0,svg:dressSVG('#ffd6e8','#ffb3d1','aline')},
-  {id:'dress_rose',slot:'dress',name:'Rose Gown',price:30,svg:dressSVG('#ff6fb1','#ffb3d1','ball')},
-  {id:'dress_sky',slot:'dress',name:'Sky Gown',price:40,svg:dressSVG('#7fc8ff','#cfeaff','ball')},
-  {id:'dress_mint',slot:'dress',name:'Mint Dress',price:45,svg:dressSVG('#7ee8c6','#c9f7e6','aline')},
-  {id:'dress_lilac',slot:'dress',name:'Lilac Mermaid',price:60,svg:dressSVG('#b78cff','#e3d4ff','mermaid')},
-  {id:'dress_sun',slot:'dress',name:'Sunshine Dress',price:55,svg:dressSVG('#ffd84d','#fff1b8','aline')},
-  {id:'dress_gold',slot:'dress',name:'Golden Gown',price:90,svg:dressSVG('#f4b63a','#ffe27a','ball',SPARKS('#fff6c8'))},
-  {id:'dress_rainbow',slot:'dress',name:'Rainbow Gown',price:120,svg:dressSVG('url(#rainbow)','rgba(255,255,255,.35)','ball',SPARKS())},
-  {id:'dress_night',slot:'dress',name:'Starry Night',price:110,svg:dressSVG('#3b2a7a','#7b5cff','mermaid',SPARKS('#ffe27a'))},
+  {id:'dress_rose',tier:1,slot:'dress',name:'Rose Gown',price:30,svg:dressSVG('#ff6fb1','#ffb3d1','ball')},
+  {id:'dress_sky',tier:2,slot:'dress',name:'Sky Gown',price:40,svg:dressSVG('#7fc8ff','#cfeaff','ball')},
+  {id:'dress_mint',tier:2,slot:'dress',name:'Mint Dress',price:45,svg:dressSVG('#7ee8c6','#c9f7e6','aline')},
+  {id:'dress_lilac',tier:3,slot:'dress',name:'Lilac Mermaid',price:60,svg:dressSVG('#b78cff','#e3d4ff','mermaid')},
+  {id:'dress_sun',tier:3,slot:'dress',name:'Sunshine Dress',price:55,svg:dressSVG('#ffd84d','#fff1b8','aline')},
+  {id:'dress_gold',tier:4,slot:'dress',name:'Golden Gown',price:90,svg:dressSVG('#f4b63a','#ffe27a','ball',SPARKS('#fff6c8'))},
+  {id:'dress_rainbow',tier:5,slot:'dress',name:'Rainbow Gown',price:120,svg:dressSVG('url(#rainbow)','rgba(255,255,255,.35)','ball',SPARKS())},
+  {id:'dress_night',tier:5,slot:'dress',name:'Starry Night',price:110,svg:dressSVG('#3b2a7a','#7b5cff','mermaid',SPARKS('#ffe27a'))},
   // shoes
-  {id:'shoes_pink',slot:'shoes',name:'Pink Flats',price:15,svg:`<ellipse cx="104" cy="295" rx="15" ry="7" fill="#ff8fc4"/><ellipse cx="136" cy="295" rx="15" ry="7" fill="#ff8fc4"/>`},
-  {id:'shoes_red',slot:'shoes',name:'Red Shoes',price:25,svg:`<ellipse cx="104" cy="295" rx="15" ry="7" fill="#e8334f"/><ellipse cx="136" cy="295" rx="15" ry="7" fill="#e8334f"/><circle cx="104" cy="290" r="3" fill="#fff"/><circle cx="136" cy="290" r="3" fill="#fff"/>`},
-  {id:'shoes_glass',slot:'shoes',name:'Glass Slippers',price:35,svg:`<ellipse cx="104" cy="295" rx="15" ry="7" fill="#cfeeff" stroke="#8fd3ff" stroke-width="2"/><ellipse cx="136" cy="295" rx="15" ry="7" fill="#cfeeff" stroke="#8fd3ff" stroke-width="2"/><ellipse cx="100" cy="292" rx="5" ry="2" fill="#fff"/><ellipse cx="132" cy="292" rx="5" ry="2" fill="#fff"/>`},
-  {id:'shoes_gold',slot:'shoes',name:'Golden Heels',price:50,svg:`<ellipse cx="104" cy="295" rx="15" ry="7" fill="#f4b63a"/><ellipse cx="136" cy="295" rx="15" ry="7" fill="#f4b63a"/><polygon points="${starPts(104,293,5,2)}" fill="#fff6c8"/><polygon points="${starPts(136,293,5,2)}" fill="#fff6c8"/>`},
-  {id:'shoes_boots',slot:'shoes',name:'Purple Boots',price:40,svg:`<rect x="90" y="276" width="28" height="22" rx="8" fill="#9a6cff"/><rect x="122" y="276" width="28" height="22" rx="8" fill="#9a6cff"/><rect x="90" y="276" width="28" height="6" fill="#e3d4ff"/><rect x="122" y="276" width="28" height="6" fill="#e3d4ff"/>`},
+  {id:'shoes_pink',tier:1,slot:'shoes',name:'Pink Flats',price:15,svg:`<ellipse cx="104" cy="295" rx="15" ry="7" fill="#ff8fc4"/><ellipse cx="136" cy="295" rx="15" ry="7" fill="#ff8fc4"/>`},
+  {id:'shoes_red',tier:2,slot:'shoes',name:'Red Shoes',price:25,svg:`<ellipse cx="104" cy="295" rx="15" ry="7" fill="#e8334f"/><ellipse cx="136" cy="295" rx="15" ry="7" fill="#e8334f"/><circle cx="104" cy="290" r="3" fill="#fff"/><circle cx="136" cy="290" r="3" fill="#fff"/>`},
+  {id:'shoes_glass',tier:3,slot:'shoes',name:'Glass Slippers',price:35,svg:`<ellipse cx="104" cy="295" rx="15" ry="7" fill="#cfeeff" stroke="#8fd3ff" stroke-width="2"/><ellipse cx="136" cy="295" rx="15" ry="7" fill="#cfeeff" stroke="#8fd3ff" stroke-width="2"/><ellipse cx="100" cy="292" rx="5" ry="2" fill="#fff"/><ellipse cx="132" cy="292" rx="5" ry="2" fill="#fff"/>`},
+  {id:'shoes_gold',tier:4,slot:'shoes',name:'Golden Heels',price:50,svg:`<ellipse cx="104" cy="295" rx="15" ry="7" fill="#f4b63a"/><ellipse cx="136" cy="295" rx="15" ry="7" fill="#f4b63a"/><polygon points="${starPts(104,293,5,2)}" fill="#fff6c8"/><polygon points="${starPts(136,293,5,2)}" fill="#fff6c8"/>`},
+  {id:'shoes_boots',tier:4,slot:'shoes',name:'Purple Boots',price:40,svg:`<rect x="90" y="276" width="28" height="22" rx="8" fill="#9a6cff"/><rect x="122" y="276" width="28" height="22" rx="8" fill="#9a6cff"/><rect x="90" y="276" width="28" height="6" fill="#e3d4ff"/><rect x="122" y="276" width="28" height="6" fill="#e3d4ff"/>`},
   // head
-  {id:'head_silver',slot:'head',name:'Silver Tiara',price:25,svg:`<path d="M90 60 L100 42 L110 56 L120 36 L130 56 L140 42 L150 60 Z" fill="#dfe6f2" stroke="#b9c6dd" stroke-width="2"/><circle cx="120" cy="44" r="4" fill="#ff8fc4"/>`},
-  {id:'head_flower',slot:'head',name:'Flower Crown',price:35,svg:[88,100,112,124,136,148].map((x,i)=>`<circle cx="${x}" cy="${52+Math.abs(i-2.5)*3}" r="7" fill="${['#ff8fc4','#ffe27a','#9ef0d9','#ff8fc4','#ffe27a','#b78cff'][i]}"/><circle cx="${x}" cy="${52+Math.abs(i-2.5)*3}" r="2.5" fill="#fff"/>`).join('')},
-  {id:'head_bow',slot:'head',name:'Pink Bow',price:15,svg:`<ellipse cx="146" cy="52" rx="12" ry="8" fill="#ff5fa8" transform="rotate(-20 146 52)"/><ellipse cx="166" cy="56" rx="12" ry="8" fill="#ff5fa8" transform="rotate(20 166 56)"/><circle cx="156" cy="55" r="5" fill="#ff8fc4"/>`},
-  {id:'head_gold',slot:'head',name:'Gold Crown',price:50,svg:`<path d="M88 62 L92 38 L106 52 L120 30 L134 52 L148 38 L152 62 Z" fill="#f4b63a" stroke="#d99a1e" stroke-width="2"/><circle cx="120" cy="40" r="5" fill="#e8334f"/><circle cx="104" cy="50" r="3.5" fill="#3fa9f5"/><circle cx="136" cy="50" r="3.5" fill="#3fa9f5"/>`},
-  {id:'head_diamond',slot:'head',name:'Diamond Tiara',price:80,svg:`<path d="M86 62 L96 40 L108 56 L120 30 L132 56 L144 40 L154 62 Z" fill="#eaf6ff" stroke="#9fd8ff" stroke-width="2"/><polygon points="${starPts(120,42,7,3)}" fill="#7fc8ff"/><circle cx="106" cy="52" r="3" fill="#b78cff"/><circle cx="134" cy="52" r="3" fill="#b78cff"/>`},
+  {id:'head_silver',tier:2,slot:'head',name:'Silver Tiara',price:25,svg:`<path d="M90 60 L100 42 L110 56 L120 36 L130 56 L140 42 L150 60 Z" fill="#dfe6f2" stroke="#b9c6dd" stroke-width="2"/><circle cx="120" cy="44" r="4" fill="#ff8fc4"/>`},
+  {id:'head_flower',tier:3,slot:'head',name:'Flower Crown',price:35,svg:[88,100,112,124,136,148].map((x,i)=>`<circle cx="${x}" cy="${52+Math.abs(i-2.5)*3}" r="7" fill="${['#ff8fc4','#ffe27a','#9ef0d9','#ff8fc4','#ffe27a','#b78cff'][i]}"/><circle cx="${x}" cy="${52+Math.abs(i-2.5)*3}" r="2.5" fill="#fff"/>`).join('')},
+  {id:'head_bow',tier:1,slot:'head',name:'Pink Bow',price:15,svg:`<ellipse cx="146" cy="52" rx="12" ry="8" fill="#ff5fa8" transform="rotate(-20 146 52)"/><ellipse cx="166" cy="56" rx="12" ry="8" fill="#ff5fa8" transform="rotate(20 166 56)"/><circle cx="156" cy="55" r="5" fill="#ff8fc4"/>`},
+  {id:'head_gold',tier:4,slot:'head',name:'Gold Crown',price:50,svg:`<path d="M88 62 L92 38 L106 52 L120 30 L134 52 L148 38 L152 62 Z" fill="#f4b63a" stroke="#d99a1e" stroke-width="2"/><circle cx="120" cy="40" r="5" fill="#e8334f"/><circle cx="104" cy="50" r="3.5" fill="#3fa9f5"/><circle cx="136" cy="50" r="3.5" fill="#3fa9f5"/>`},
+  {id:'head_diamond',tier:5,slot:'head',name:'Diamond Tiara',price:80,svg:`<path d="M86 62 L96 40 L108 56 L120 30 L132 56 L144 40 L154 62 Z" fill="#eaf6ff" stroke="#9fd8ff" stroke-width="2"/><polygon points="${starPts(120,42,7,3)}" fill="#7fc8ff"/><circle cx="106" cy="52" r="3" fill="#b78cff"/><circle cx="134" cy="52" r="3" fill="#b78cff"/>`},
   // earrings
-  {id:'ear_pearl',slot:'earrings',name:'Pearl Earrings',price:20,svg:`<circle cx="74" cy="118" r="4.5" fill="#fff" stroke="#ddd" stroke-width="1"/><circle cx="166" cy="118" r="4.5" fill="#fff" stroke="#ddd" stroke-width="1"/>`},
-  {id:'ear_ruby',slot:'earrings',name:'Ruby Earrings',price:30,svg:`<polygon points="74,111 80,118 74,126 68,118" fill="#e8334f"/><polygon points="166,111 172,118 166,126 160,118" fill="#e8334f"/>`},
-  {id:'ear_star',slot:'earrings',name:'Star Earrings',price:40,svg:`<polygon points="${starPts(74,119,7,3)}" fill="#ffd84d"/><polygon points="${starPts(166,119,7,3)}" fill="#ffd84d"/>`},
-  {id:'ear_heart',slot:'earrings',name:'Heart Earrings',price:35,svg:`<path d="M74 124 L67 116 Q67 110 72 111 Q74 112 74 114 Q74 112 76 111 Q81 110 81 116 Z" fill="#ff5fa8"/><path d="M166 124 L159 116 Q159 110 164 111 Q166 112 166 114 Q166 112 168 111 Q173 110 173 116 Z" fill="#ff5fa8"/>`},
+  {id:'ear_pearl',tier:1,slot:'earrings',name:'Pearl Earrings',price:20,svg:`<circle cx="74" cy="118" r="4.5" fill="#fff" stroke="#ddd" stroke-width="1"/><circle cx="166" cy="118" r="4.5" fill="#fff" stroke="#ddd" stroke-width="1"/>`},
+  {id:'ear_ruby',tier:2,slot:'earrings',name:'Ruby Earrings',price:30,svg:`<polygon points="74,111 80,118 74,126 68,118" fill="#e8334f"/><polygon points="166,111 172,118 166,126 160,118" fill="#e8334f"/>`},
+  {id:'ear_star',tier:4,slot:'earrings',name:'Star Earrings',price:40,svg:`<polygon points="${starPts(74,119,7,3)}" fill="#ffd84d"/><polygon points="${starPts(166,119,7,3)}" fill="#ffd84d"/>`},
+  {id:'ear_heart',tier:3,slot:'earrings',name:'Heart Earrings',price:35,svg:`<path d="M74 124 L67 116 Q67 110 72 111 Q74 112 74 114 Q74 112 76 111 Q81 110 81 116 Z" fill="#ff5fa8"/><path d="M166 124 L159 116 Q159 110 164 111 Q166 112 166 114 Q166 112 168 111 Q173 110 173 116 Z" fill="#ff5fa8"/>`},
   // necklaces
-  {id:'neck_heart',slot:'necklace',name:'Heart Necklace',price:25,svg:`<path d="M102 150 Q120 172 138 150" stroke="#f4b63a" stroke-width="2" fill="none"/><path d="M120 176 L112 167 Q112 160 117 161 Q120 162 120 165 Q120 162 123 161 Q128 160 128 167 Z" fill="#ff5fa8"/>`},
-  {id:'neck_pearls',slot:'necklace',name:'Pearl Necklace',price:35,svg:[102,107,112,117,122,127,132,137].map((x,i)=>`<circle cx="${x+0.5}" cy="${150+Math.sin(i/7*Math.PI)*16}" r="3.5" fill="#fff" stroke="#ddd" stroke-width="1"/>`).join('')},
-  {id:'neck_gem',slot:'necklace',name:'Gem Necklace',price:55,svg:`<path d="M102 150 Q120 172 138 150" stroke="#dfe6f2" stroke-width="2.5" fill="none"/><polygon points="120,164 128,172 120,182 112,172" fill="#3fa9f5"/><polygon points="120,166 125,172 120,178 115,172" fill="#cfeeff"/>`},
+  {id:'neck_heart',tier:1,slot:'necklace',name:'Heart Necklace',price:25,svg:`<path d="M102 150 Q120 172 138 150" stroke="#f4b63a" stroke-width="2" fill="none"/><path d="M120 176 L112 167 Q112 160 117 161 Q120 162 120 165 Q120 162 123 161 Q128 160 128 167 Z" fill="#ff5fa8"/>`},
+  {id:'neck_pearls',tier:2,slot:'necklace',name:'Pearl Necklace',price:35,svg:[102,107,112,117,122,127,132,137].map((x,i)=>`<circle cx="${x+0.5}" cy="${150+Math.sin(i/7*Math.PI)*16}" r="3.5" fill="#fff" stroke="#ddd" stroke-width="1"/>`).join('')},
+  {id:'neck_gem',tier:4,slot:'necklace',name:'Gem Necklace',price:55,svg:`<path d="M102 150 Q120 172 138 150" stroke="#dfe6f2" stroke-width="2.5" fill="none"/><polygon points="120,164 128,172 120,182 112,172" fill="#3fa9f5"/><polygon points="120,166 125,172 120,178 115,172" fill="#cfeeff"/>`},
   // wands
-  {id:'wand_star',slot:'wand',name:'Star Wand',price:30,svg:`<line x1="172" y1="212" x2="198" y2="150" stroke="#ff8fc4" stroke-width="5" stroke-linecap="round"/><polygon points="${starPts(200,144,13,6)}" fill="#ffd84d"/>`},
-  {id:'wand_heart',slot:'wand',name:'Heart Wand',price:40,svg:`<line x1="172" y1="212" x2="198" y2="150" stroke="#b78cff" stroke-width="5" stroke-linecap="round"/><path d="M200 156 L187 143 Q187 132 196 134 Q200 136 200 140 Q200 136 204 134 Q213 132 213 143 Z" fill="#ff5fa8"/>`},
-  {id:'wand_rainbow',slot:'wand',name:'Rainbow Wand',price:70,svg:`<line x1="172" y1="212" x2="198" y2="150" stroke="url(#rainbow)" stroke-width="6" stroke-linecap="round"/><polygon points="${starPts(200,144,14,6)}" fill="#fff"/><polygon points="${starPts(200,144,8,3)}" fill="#ffd84d"/><polygon points="${starPts(186,166,5,2)}" fill="#fff"/><polygon points="${starPts(214,160,5,2)}" fill="#fff"/>`},
+  {id:'wand_star',tier:1,slot:'wand',name:'Star Wand',price:30,svg:`<line x1="172" y1="212" x2="198" y2="150" stroke="#ff8fc4" stroke-width="5" stroke-linecap="round"/><polygon points="${starPts(200,144,13,6)}" fill="#ffd84d"/>`},
+  {id:'wand_heart',tier:2,slot:'wand',name:'Heart Wand',price:40,svg:`<line x1="172" y1="212" x2="198" y2="150" stroke="#b78cff" stroke-width="5" stroke-linecap="round"/><path d="M200 156 L187 143 Q187 132 196 134 Q200 136 200 140 Q200 136 204 134 Q213 132 213 143 Z" fill="#ff5fa8"/>`},
+  {id:'wand_rainbow',tier:5,slot:'wand',name:'Rainbow Wand',price:70,svg:`<line x1="172" y1="212" x2="198" y2="150" stroke="url(#rainbow)" stroke-width="6" stroke-linecap="round"/><polygon points="${starPts(200,144,14,6)}" fill="#fff"/><polygon points="${starPts(200,144,8,3)}" fill="#ffd84d"/><polygon points="${starPts(186,166,5,2)}" fill="#fff"/><polygon points="${starPts(214,160,5,2)}" fill="#fff"/>`},
   // pets
-  {id:'pet_cat',slot:'pet',name:'Kitty',price:60,img:'img/pet_cat.png'},
-  {id:'pet_dog',slot:'pet',name:'Puppy',price:60,img:'img/pet_dog.png'},
-  {id:'pet_bunny',slot:'pet',name:'Bunny',price:70,img:'img/pet_bunny.png'},
-  {id:'pet_hamster',slot:'pet',name:'Hamster',price:50,img:'img/pet_hamster.png'},
-  {id:'pet_butterfly',slot:'pet',name:'Butterfly',price:80,img:'img/pet_butterfly.png'},
-  {id:'pet_unicorn',slot:'pet',name:'Unicorn',price:120,img:'img/pet_unicorn.png'},
+  {id:'pet_cat',tier:3,slot:'pet',name:'Kitty',price:60,img:'img/pet_cat.png'},
+  {id:'pet_dog',tier:3,slot:'pet',name:'Puppy',price:60,img:'img/pet_dog.png'},
+  {id:'pet_bunny',tier:4,slot:'pet',name:'Bunny',price:70,img:'img/pet_bunny.png'},
+  {id:'pet_hamster',tier:2,slot:'pet',name:'Hamster',price:50,img:'img/pet_hamster.png'},
+  {id:'pet_butterfly',tier:4,slot:'pet',name:'Butterfly',price:80,img:'img/pet_butterfly.png'},
+  {id:'pet_unicorn',tier:5,slot:'pet',name:'Unicorn',price:120,img:'img/pet_unicorn.png'},
 ];
+/* shop tiers: simple things first, fancier things as she finishes worlds */
+const TIERS=[null,{req:[],label:''},{req:['castle'],label:'Finish 🏰 level 1'},{req:['meadow'],label:'Finish 🦄 level 1'},{req:['icecream'],label:'Finish 🍦 level 1'},{req:['families','sounds'],label:'Finish 🌈 + 🧁 level 1'}];
+function tierOpen(t){ const T=TIERS[t||1]; return state.unlockedAll || T.req.every(id=>wstate(id).lvl>=1); }
+function itemOpen(it){ return it.price===0 || tierOpen(it.tier||1); }
 const SLOTS=[['dress','👗','Dresses'],['head','👑','Tiaras'],['shoes','👠','Shoes'],['earrings','💎','Earrings'],['necklace','📿','Necklaces'],['wand','🪄','Wands'],['hair','💇‍♀️','Hair'],['pet','🦄','Pets']];
 const ITEM={}; ITEMS.forEach(i=>ITEM[i.id]=i);
 function shopState(){ return state.shop || (state.shop={owned:['hair_brown','dress_simple'],equipped:{hair:'hair_brown',dress:'dress_simple'},spent:0}); }
@@ -717,11 +725,11 @@ function renderShop(){
   $('shopTabs').innerHTML=SLOTS.map(([id,em,name])=>`<button class="tab ${shopTab===id?'on':''}" data-slot="${id}">${em}<small>${name}</small></button>`).join('');
   $('shopTabs').querySelectorAll('.tab').forEach(b=>b.onclick=()=>{ shopTab=b.dataset.slot; sfx.tap(); renderShop(); $('shopItems').scrollTop=0; b.scrollIntoView({inline:'center',block:'nearest',behavior:'smooth'}); });
   const grid=$('shopItems'); grid.innerHTML='';
-  ITEMS.filter(i=>i.slot===shopTab).forEach(it=>{
-    const owned=sh.owned.includes(it.id), wearing=sh.equipped[it.slot]===it.id, can=wallet()>=it.price;
-    const card=document.createElement('button'); card.className='item'+(wearing?' wearing':owned?' owned':can?' can':' cant');
+  ITEMS.filter(i=>i.slot===shopTab).sort((a,b)=>(itemOpen(b)-itemOpen(a))||(a.tier||1)-(b.tier||1)).forEach(it=>{
+    const owned=sh.owned.includes(it.id), wearing=sh.equipped[it.slot]===it.id, can=wallet()>=it.price, open=itemOpen(it);
+    const card=document.createElement('button'); card.className='item'+(wearing?' wearing':owned?' owned':!open?' locked':can?' can':' cant');
     const preview=Object.assign({},sh.equipped,{[it.slot]:it.id});
-    card.innerHTML=`<div class="pv">${princessSVG(preview)}</div><div class="iname">${it.name}</div><div class="iprice">${wearing?'✅ Wearing':owned?'👗 Wear':`⭐ ${it.price}`}</div>`;
+    card.innerHTML=`<div class="pv">${princessSVG(preview)}</div><div class="iname">${it.name}</div><div class="iprice">${wearing?'✅ Wearing':owned?'👗 Wear':!open?'🔒 '+it.price:`⭐ ${it.price}`}</div>${!open?`<div class="ireq">${TIERS[it.tier].label}</div>`:''}`;
     card.onclick=()=>tapItem(it,card);
     grid.appendChild(card);
   });
@@ -732,6 +740,7 @@ function tapItem(it,card){
     if(sh.equipped[it.slot]===it.id && it.price>0 && !['hair','dress'].includes(it.slot)){ delete sh.equipped[it.slot]; } else sh.equipped[it.slot]=it.id;
     sfx.tap(); save(); renderShop(); return;
   }
+  if(!itemOpen(it)){ sfx.wrong(); card.classList.add('wrong'); setTimeout(()=>card.classList.remove('wrong'),400); sayPhrase('p_locked','Not yet! Finish more words to unlock it!'); return; }
   if(wallet()<it.price){ sfx.wrong(); card.classList.add('wrong'); setTimeout(()=>card.classList.remove('wrong'),400); sayPhrase('p_need','You need more stars. Keep spelling!'); return; }
   sh.spent+=it.price; sh.owned.push(it.id); sh.equipped[it.slot]=it.id; save();
   sfx.sticker(); confetti(50); sayPhrase('p_buy','Beautiful! She loves it!'); renderShop();
@@ -753,7 +762,7 @@ function renderParent(){
   $('customWorld').innerHTML=WORLDS.map(w=>`<option value="${w.id}">${w.emoji} ${w.name}</option>`).join('');
   $('customList').innerHTML=state.custom.map((c,i)=>`<span class="chip">${c.emoji} ${c.word} <button data-i="${i}">✕</button></span>`).join('');
   $('customList').querySelectorAll('button').forEach(b=>b.onclick=()=>{ state.custom.splice(+b.dataset.i,1); save(); renderParent(); });
-  $('shopNote').textContent=`כוכבים לבזבוז: ${wallet()} · פריטים בארון: ${shopState().owned.length} מתוך ${ITEMS.length} · הוצאו עד היום: ${shopState().spent} כוכבים.`;
+  $('shopNote').textContent=`כוכבים לבזבוז: ${wallet()} · פריטים בארון: ${shopState().owned.length} מתוך ${ITEMS.length} · הוצאו עד היום: ${shopState().spent} כוכבים. פריטים פתוחים לקנייה: ${ITEMS.filter(itemOpen).length}. החנות נפתחת בשלבים: פריטים פשוטים מההתחלה, ואחרי סיום רמה 1 בטירה, ביוניקורנים, בגלידה ובמשפחות+צלילים נפתחים דברים מפוארים יותר.`;
   fillVoiceSelect(); renderDiag();
 }
 
