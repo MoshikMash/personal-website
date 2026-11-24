@@ -89,7 +89,7 @@ button:active{transform:scale(.95)}
 .slot.ghost{color:rgba(90,42,94,.32)}
 .wordhint{min-height:46px;display:flex;align-items:center;justify-content:center;font-size:clamp(28px,9vw,42px);font-weight:700;letter-spacing:4px;color:var(--ink);text-shadow:0 2px 0 #fff,0 6px 16px rgba(170,60,130,.25);transition:filter .35s,opacity .35s;padding:0 10px;text-align:center;line-height:1.1}
 .wordhint.sentence{font-size:clamp(20px,6vw,28px);letter-spacing:1px}
-.wordhint.blur{filter:blur(2.6px);opacity:.5}
+.wordhint.blur{filter:blur(1.7px);opacity:.68}
 .wordhint.hidden{opacity:0;filter:blur(6px);pointer-events:none}
 .wordhint .rime{color:var(--pink-deep)}
 .slot.filled{background:#fff;border:3px solid var(--mint);color:var(--ink);animation:fill .35s cubic-bezier(.34,1.56,.64,1)}
@@ -431,7 +431,7 @@ function renderHome(){
   const box=$('worlds'); box.innerHTML='';
   const best=(state.challenge||{}).best, runs=(state.challenge||{}).runs||0;
   const cb=document.createElement('button'); cb.className='world challenge'; cb.id='challengeBtn';
-  cb.innerHTML=`<div class="em">${worldIcon('challenge','🏆')}</div><div class="info"><div class="name">Princess Challenge</div><div class="sub"><span>👂 10 words</span><span>⏱ ${best?'Best '+best+'s':'no picture, no hints'}</span>${runs?`<span>🏅 ${runs}</span>`:''}</div></div><div class="go">▶️</div>`;
+  cb.innerHTML=`<div class="em">${worldIcon('challenge','🏆')}</div><div class="info"><div class="name">Princess Challenge</div><div class="sub"><span>📝 10 words</span><span>🔤 14 letters</span><span>⏱ ${best?'Best '+best+'s':'timer'}</span>${runs?`<span>🏅 ${runs}</span>`:''}</div></div><div class="go">▶️</div>`;
   cb.onclick=startChallenge; box.appendChild(cb);
   WORLDS.forEach((w,i)=>{
     const ws=wstate(w.id), words=worldWords(w), unlocked=isUnlocked(w,i);
@@ -479,7 +479,7 @@ function buildTray(tokens,tier,sentence){
     const c=shuffle(SENTENCE_DISTRACTORS.filter(x=>!tokens.includes(x)));
     extra=c.slice(0,need);
   } else {
-    const need = Math.max(10, tokens.length+3) - tokens.length; /* always about ten tiles to choose from */
+    const need = Math.max(G.w.challenge?14:10, tokens.length+3) - tokens.length; /* about ten tiles to choose from, fourteen in the challenge */
     const low=tokens.map(t=>t.toLowerCase());
     const alpha=shuffle('abcdefghijklmnopqrstuvwxyz'.split('').filter(c=>!low.includes(c)));
     let conf=shuffle([...new Set(low.flatMap(c=>c.length>1?[]:(CONFUSABLE[c]||'').split('')))].filter(c=>!low.includes(c)));
@@ -533,7 +533,7 @@ function tapTile(b){
   } else {
     sfx.wrong(); c.mistakes++; c.wrongHere++;
     b.classList.remove('wrong'); void b.offsetWidth; b.classList.add('wrong');
-    if(!G.w.challenge && c.wrongHere>=(c.tier>=3?3:2)){ const h=[...document.querySelectorAll('.tile:not(.used)')].find(t=>t.dataset.tok===expected); if(h) h.classList.add('hint'); }
+    if(c.wrongHere>=(c.tier>=3?3:2)){ const h=[...document.querySelectorAll('.tile:not(.used)')].find(t=>t.dataset.tok===expected); if(h) h.classList.add('hint'); }
   }
 }
 function wordDone(){
@@ -607,8 +607,8 @@ $('homeBtn').onclick=()=>{ renderHome(); show('home'); };
 $('bookBtn').onclick=()=>{ renderBook(); show('book'); };
 function startChallenge(){
   const pool=[]; WORLDS.forEach((w,i)=>{ if(!w.sentence && !w.listen && isUnlocked(w,i)) worldWords(w).forEach(x=>{ if(!pool.some(y=>y[0]===x[0])) pool.push(x); }); });
-  const cw={id:'challenge', name:'Princess Challenge', emoji:'🏆', challenge:true, listen:true, intro:'p_challenge', stickers:['🏆'], words:pool};
-  wstate('challenge').lvl=3; startRound(cw);
+  const cw={id:'challenge', name:'Princess Challenge', emoji:'🏆', challenge:true, intro:'p_challenge', stickers:['🏆'], words:pool};
+  wstate('challenge').lvl=0; startRound(cw);
 }
 $('bookBack').onclick=()=>{ renderHome(); show('home'); };
 $('starsPill').onclick=()=>sayPhrase('p_great','Great job!');
