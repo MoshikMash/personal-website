@@ -68,11 +68,12 @@ button:active{transform:scale(.95)}
 .dots b.done{background:var(--pink-deep);transform:scale(1.15)}
 .dots b.now{background:var(--yellow);box-shadow:0 0 0 4px rgba(255,226,122,.45)}
 
-.stage{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;min-height:0}
-.picture{--w:min(64vw,250px);width:var(--w);height:var(--w);border-radius:40px;display:grid;place-items:center;font-size:calc(var(--w)*.58);position:relative;transition:transform .2s;
+.stage{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;min-height:0}
+.picture{--w:min(58vw,230px);width:var(--w);height:var(--w);border-radius:40px;display:grid;place-items:center;font-size:calc(var(--w)*.58);position:relative;transition:transform .2s;
   background:var(--pbg,linear-gradient(145deg,#ffd1e8,#d9c6ff));box-shadow:0 18px 40px rgba(170,60,130,.28),inset 0 0 0 5px rgba(255,255,255,.75)}
 .picture .glow{position:absolute;inset:12%;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.95) 0%,rgba(255,255,255,.45) 45%,rgba(255,255,255,0) 72%);pointer-events:none}
 .picture img{position:relative;width:76%;height:76%;object-fit:contain;filter:drop-shadow(0 14px 16px rgba(120,40,100,.35));animation:hover 3.2s ease-in-out infinite;display:none}
+.picture.loading #pic,.picture.loading img{visibility:hidden}
 .picture.has-img img{display:block}.picture.has-img #pic{display:none}
 .picture #pic{position:relative;filter:drop-shadow(0 10px 12px rgba(120,40,100,.3))}
 @keyframes hover{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-9px) rotate(2deg)}}
@@ -86,7 +87,11 @@ button:active{transform:scale(.95)}
 .slots{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;max-width:100%;padding:0 4px}
 .slot{min-width:var(--tile);height:var(--tile);padding:0 10px;border-radius:18px;background:rgba(255,255,255,.55);border:3px dashed rgba(255,95,168,.5);display:grid;place-items:center;font-size:calc(var(--tile)*.55);font-weight:700;color:transparent;transition:all .25s;position:relative}
 .slot.ghost{color:rgba(90,42,94,.32)}
-.slot.ghost.faint{color:rgba(90,42,94,.17)}
+.wordhint{min-height:46px;display:flex;align-items:center;justify-content:center;font-size:clamp(28px,9vw,42px);font-weight:700;letter-spacing:4px;color:var(--ink);text-shadow:0 2px 0 #fff,0 6px 16px rgba(170,60,130,.25);transition:filter .35s,opacity .35s;padding:0 10px;text-align:center;line-height:1.1}
+.wordhint.sentence{font-size:clamp(20px,6vw,28px);letter-spacing:1px}
+.wordhint.blur{filter:blur(2.6px);opacity:.5}
+.wordhint.hidden{opacity:0;filter:blur(6px);pointer-events:none}
+.wordhint .rime{color:var(--pink-deep)}
 .slot.filled{background:#fff;border:3px solid var(--mint);color:var(--ink);animation:fill .35s cubic-bezier(.34,1.56,.64,1)}
 .slot.sentence{font-size:calc(var(--tile)*.38)}
 .slot.wide,.tile.wide{font-size:calc(var(--tile)*.42);letter-spacing:1px}
@@ -187,6 +192,7 @@ button:active{transform:scale(.95)}
   </div>
   <div class="stage">
     <div class="picture" id="picture"><div class="glow"></div><i class="spark s1">✨</i><i class="spark s2">⭐</i><i class="spark s3">💖</i><img id="picImg" alt="" draggable="false"><span id="pic">🐱</span><span class="spk">🔊</span></div>
+    <div class="wordhint" id="wordhint"></div>
     <div class="slots" id="slots"></div>
   </div>
   <div class="tray" id="tray"></div>
@@ -219,7 +225,7 @@ button:active{transform:scale(.95)}
   <section>
     <h3>התקדמות</h3>
     <table id="statsTable"></table>
-    <p class="note">לכל עולם יש רמה אחת לכל המילים שלו: 1 = המילה מוצגת, 2 = המילה מוצגת חלש, 3 = רק תמונה וקול, 4 = רק תמונה וקול עם הרבה אותיות מבלבלות. העולם עולה רמה כשכמעט כל המילים שלו (11 מתוך 12) אויתו ברמה הזאת עם 2 כוכבים לפחות. אפשר לשנות רמה ידנית בטבלה. עולם חדש נפתח כשהעולם הקודם סיים את רמה 1.</p>
+    <p class="note">לכל עולם יש רמה אחת לכל המילים שלו: 1 = המילה כתובה מתחת לתמונה, 2 = המילה כתובה אבל מטושטשת, 3 = רק תמונה וקול (לחיצה על התמונה מציצה במילה במחיר כוכב), 4 = רק תמונה וקול עם יותר אותיות מבלבלות. בכל רמה יש כ-10 אותיות לבחירה. העולם עולה רמה כשכמעט כל המילים שלו (11 מתוך 12) אויתו ברמה הזאת עם 2 כוכבים לפחות. אפשר לשנות רמה ידנית בטבלה. עולם חדש נפתח כשהעולם הקודם סיים את רמה 1.</p>
   </section>
 
   <section>
@@ -461,6 +467,7 @@ function startRound(w){
   const intro=w.intro||(G.sentence?'p_sentences':'p_spell');
   sayPhrase(intro, {p_sentences:"Let's make sentences!",p_listen:'Listen carefully, and spell the word!',p_families:"Let's spell word families!",p_sounds:"Let's spell new sounds!",p_challenge:'Princess challenge! Spell as fast as you can!'}[intro]||"Let's spell words!");
   preloadClips('abcdefghijklmnopqrstuvwxyz'.split('').map(c=>'l_'+c).concat(G.items.flatMap(it=>[clipKey(it.t)].concat(G.sentence?it.t.split(' ').map(clipKey):[]))));
+  G.items.forEach(it=>{ const src=imgFor(it.t); if(src){ const pre=new Image(); pre.src=src; (G.preloaded=G.preloaded||[]).push(pre); } });
   setTimeout(nextItem,w.challenge?2600:900);
 }
 function renderDots(){ $('dots').innerHTML=G.items.map((_,k)=>`<b class="${k<G.i?'done':k===G.i?'now':''}"></b>`).join(''); }
@@ -468,18 +475,18 @@ function tokensOf(text,sentence){ return sentence? text.split(' ') : text.split(
 function buildTray(tokens,tier,sentence){
   let extra=[];
   if(sentence){
-    const need = tier===0?1: tier===3?3:2;
+    const need = tier<=1?2:3;
     const c=shuffle(SENTENCE_DISTRACTORS.filter(x=>!tokens.includes(x)));
     extra=c.slice(0,need);
   } else {
-    const need = tier===0?3: tier===1?3: tier===2?4:5;
+    const need = Math.max(10, tokens.length+3) - tokens.length; /* always about ten tiles to choose from */
     const low=tokens.map(t=>t.toLowerCase());
     const alpha=shuffle('abcdefghijklmnopqrstuvwxyz'.split('').filter(c=>!low.includes(c)));
     let conf=shuffle([...new Set(low.flatMap(c=>c.length>1?[]:(CONFUSABLE[c]||'').split('')))].filter(c=>!low.includes(c)));
     /* digraph words: the pair's own letters and the other pairs are the natural traps */
     const pairs=low.filter(c=>c.length>1);
     if(pairs.length){ const traps=shuffle([...new Set(pairs.flatMap(p=>p.split('')).concat(DIGRAPHS))].filter(c=>!low.includes(c))); conf=traps.slice(0,tier===0?1:2).concat(conf); }
-    const nConf = tier===0?(pairs.length?1:0): tier===1?2: tier===2?3:4;
+    const nConf = tier===0?1: tier===1?2: tier===2?3:4;
     extra=conf.slice(0,nConf);
     for(const c of alpha){ if(extra.length>=need) break; if(!extra.includes(c)) extra.push(c); }
   }
@@ -494,21 +501,25 @@ function nextItem(){
   const pic=$('picture'); pic.classList.remove('pop'); void pic.offsetWidth; pic.classList.add('pop'); $('pic').textContent=G.listen?'👂':it.e;
   pic.style.setProperty('--pbg', WORLD_BG[G.w.id]||WORLD_BG.castle);
   const src=G.listen?'img/ear_icon.png':imgFor(it.t), im=$('picImg');
-  if(src){ pic.classList.add('has-img'); im.onerror=()=>pic.classList.remove('has-img'); im.src=src; } else { pic.classList.remove('has-img'); im.removeAttribute('src'); }
+  if(src){ pic.classList.add('has-img','loading'); im.onload=()=>pic.classList.remove('loading'); im.onerror=()=>pic.classList.remove('has-img','loading'); im.src=src; if(im.complete&&im.naturalWidth) pic.classList.remove('loading'); } else { pic.classList.remove('has-img','loading'); im.removeAttribute('src'); }
   const nxi=G.items[G.i+1]; if(nxi){ const ns=imgFor(nxi.t); if(ns){ const pre=new Image(); pre.src=ns; } }
   // slots
   const slots=$('slots'); slots.innerHTML='';
   G.cur.tokens.forEach((tok,k)=>{ const d=document.createElement('div'); d.className='slot'+(G.sentence?' sentence':'')+(tok.length>1&&!G.sentence?' wide':'')+(k===0?' next':''); d.textContent=fmt(tok); d.dataset.k=k; slots.appendChild(d); });
-  setGhost(!G.listen && tier<=1, tier===1);
+  showHint(G.listen?'hidden':tier===0?'clear':tier===1?'blur':'hidden');
   // tray
   const tray=$('tray'); tray.innerHTML='';
   buildTray(G.cur.tokens,tier,G.sentence).forEach(tok=>{ const b=document.createElement('button'); b.className='tile'+(G.sentence?' sentence':'')+(tok.length>1&&!G.sentence?' wide':''); b.textContent=fmt(tok); b.dataset.tok=tok; b.onclick=()=>tapTile(b); tray.appendChild(b); });
   setTimeout(()=>say(it.t,{rate:0.8}),350);
   if(G.listen) setTimeout(()=>{ if(G&&G.cur&&G.cur.text===it.t&&!G.cur.done&&G.cur.pos===0) say(it.t,{rate:0.8}); },2200);
 }
+function showHint(mode){
+  const h=$('wordhint'), c=G.cur; h.className='wordhint'+(G.sentence?' sentence':'')+(mode==='blur'?' blur':mode==='hidden'?' hidden':'');
+  if(c.fam&&c.text.endsWith(c.fam)) h.innerHTML=fmt(c.text.slice(0,-c.fam.length))+'<span class="rime">'+fmt(c.fam)+'</span>'; else h.textContent=fmt(c.text);
+}
 function setGhost(on,faint){ document.querySelectorAll('.slot:not(.filled)').forEach(s=>{ s.classList.toggle('ghost',on); s.classList.toggle('faint',!!faint); }); }
 function peek(){ if(!G||!G.cur||G.cur.done) return; say(G.cur.text,{rate:0.8});
-  if(!G.listen && G.cur.tier===2 && !G.cur.peeked){ G.cur.peeked=true; G.cur.mistakes++; setGhost(true); clearTimeout(G.peekTimer); G.peekTimer=setTimeout(()=>setGhost(false),1500); } }
+  if(!G.listen && G.cur.tier===2 && !G.cur.peeked){ G.cur.peeked=true; G.cur.mistakes++; showHint('clear'); clearTimeout(G.peekTimer); G.peekTimer=setTimeout(()=>{ if(G&&G.cur&&!G.cur.done) showHint('hidden'); },1500); } }
 function tapTile(b){
   if(!G||!G.cur||G.cur.done) return;
   const c=G.cur, expected=c.tokens[c.pos], tok=b.dataset.tok;
