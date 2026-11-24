@@ -1,0 +1,931 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#ff8fc4">
+<title>Word Princess</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --pink:#ff8fc4; --pink-deep:#ff5fa8; --purple:#b78cff; --mint:#9ef0d9; --yellow:#ffe27a; --sky:#9fd8ff;
+  --card:rgba(255,255,255,.82); --ink:#5a2a5e; --ink-soft:#8d5e91; --shadow:0 10px 30px rgba(170,60,130,.22);
+  --tile:min(17vw,72px);
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{
+  font-family:'Fredoka','Segoe UI',system-ui,sans-serif;color:var(--ink);
+  background:linear-gradient(160deg,#ffd9ec 0%,#ffb9dc 45%,#d7c4ff 100%);
+  min-height:100dvh;overflow:hidden;position:relative;user-select:none;-webkit-user-select:none;touch-action:manipulation;
+}
+button{font-family:inherit;border:none;cursor:pointer;color:inherit;background:none}
+button:active{transform:scale(.95)}
+
+/* floating decorations */
+.deco{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:0}
+.deco span{position:absolute;font-size:34px;opacity:.35;animation:floaty 9s ease-in-out infinite}
+@keyframes floaty{0%,100%{transform:translateY(0) rotate(-6deg)}50%{transform:translateY(-22px) rotate(8deg)}}
+
+.screen{position:fixed;inset:0;display:none;flex-direction:column;z-index:1;padding:max(12px,env(safe-area-inset-top)) 14px max(12px,env(safe-area-inset-bottom))}
+.screen.active{display:flex;animation:fadeIn .35s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+
+/* ---------- HOME ---------- */
+#home{align-items:center;overflow-y:auto}
+.title{margin-top:8px;text-align:center}
+.title .crown{font-size:56px;display:block;animation:bob 2.5s ease-in-out infinite}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.title h1{font-size:clamp(30px,9vw,42px);font-weight:700;letter-spacing:1px;
+  background:linear-gradient(90deg,#ff4fa0,#b05cff,#ff4fa0);-webkit-background-clip:text;background-clip:text;color:transparent;
+  text-shadow:none}
+.title p{color:var(--ink-soft);font-size:16px;font-weight:600}
+.worlds{width:100%;max-width:440px;display:grid;gap:12px;margin-top:16px;padding-bottom:16px}
+.world{display:flex;align-items:center;gap:14px;background:var(--card);border-radius:26px;padding:14px 16px;box-shadow:var(--shadow);text-align:left;width:100%;position:relative;overflow:hidden;border:3px solid transparent}
+.world .em{font-size:48px;width:64px;height:64px;display:grid;place-items:center;text-align:center;filter:drop-shadow(0 4px 6px rgba(0,0,0,.12))}
+.world .em img{width:64px;height:64px;object-fit:contain}
+.world .info{flex:1}
+.world .name{font-size:20px;font-weight:700}
+.world .sub{font-size:14px;color:var(--ink-soft);font-weight:600;display:flex;gap:10px;align-items:center;margin-top:2px}
+.bar{height:10px;background:#f3d4ea;border-radius:10px;overflow:hidden;margin-top:8px}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--pink-deep),var(--purple));border-radius:10px;transition:width .5s}
+.world.challenge{background:linear-gradient(135deg,#fff6d6,#ffe9a8);border-color:#ffd44d}
+.world.locked{filter:saturate(.3);opacity:.75}
+.world.locked::after{content:'🔒';position:absolute;right:16px;top:50%;transform:translateY(-50%);font-size:34px}
+.world .go{font-size:30px}
+.home-foot{display:flex;gap:10px;margin-bottom:8px;flex-wrap:wrap;justify-content:center}
+.pill{background:var(--card);border-radius:999px;padding:10px 18px;font-weight:700;font-size:16px;box-shadow:var(--shadow);display:flex;gap:8px;align-items:center}
+
+/* ---------- PLAY ---------- */
+#play{justify-content:space-between}
+#play.many{--tile:min(15vw,60px)}
+#play.many .picture{--w:min(48vw,190px)}
+#play.many .wordhint{min-height:40px;font-size:clamp(26px,8vw,36px)}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.round{background:var(--card);border-radius:999px;padding:8px 14px;font-weight:700;font-size:18px;box-shadow:var(--shadow);display:flex;gap:8px;align-items:center}
+.iconbtn{width:46px;height:46px;border-radius:50%;background:var(--card);box-shadow:var(--shadow);font-size:22px;display:grid;place-items:center}
+.dots{display:flex;gap:6px;justify-content:center;margin-top:10px}
+.dots b{width:12px;height:12px;border-radius:50%;background:rgba(255,255,255,.6);display:block;transition:all .3s}
+.dots b.done{background:var(--pink-deep);transform:scale(1.15)}
+.dots b.now{background:var(--yellow);box-shadow:0 0 0 4px rgba(255,226,122,.45)}
+
+.stage{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;min-height:0}
+.picture{--w:min(58vw,230px);width:var(--w);height:var(--w);border-radius:40px;display:grid;place-items:center;font-size:calc(var(--w)*.58);position:relative;transition:transform .2s;
+  background:var(--pbg,linear-gradient(145deg,#ffd1e8,#d9c6ff));box-shadow:0 18px 40px rgba(170,60,130,.28),inset 0 0 0 5px rgba(255,255,255,.75)}
+.picture .glow{position:absolute;inset:12%;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.95) 0%,rgba(255,255,255,.45) 45%,rgba(255,255,255,0) 72%);pointer-events:none}
+.picture img{position:relative;width:76%;height:76%;object-fit:contain;filter:drop-shadow(0 14px 16px rgba(120,40,100,.35));animation:hover 3.2s ease-in-out infinite;display:none}
+.picture.loading #pic,.picture.loading img{visibility:hidden}
+.picture.has-img img{display:block}.picture.has-img #pic{display:none}
+.picture #pic{position:relative;filter:drop-shadow(0 10px 12px rgba(120,40,100,.3))}
+@keyframes hover{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-9px) rotate(2deg)}}
+.picture .spark{position:absolute;font-style:normal;pointer-events:none;animation:twinkle 2.4s ease-in-out infinite;font-size:26px}
+.picture .s1{top:8px;left:12px}.picture .s2{top:14px;right:16px;animation-delay:.8s;font-size:20px}.picture .s3{bottom:16px;left:18px;animation-delay:1.5s;font-size:22px}
+@keyframes twinkle{0%,100%{opacity:.25;transform:scale(.7) rotate(0)}50%{opacity:1;transform:scale(1.15) rotate(15deg)}}
+.picture .spk{position:absolute;right:-4px;bottom:-4px;width:52px;height:52px;font-size:24px;border:4px solid #fff;border-radius:50%;background:var(--pink-deep);color:#fff;display:grid;place-items:center;font-size:20px;box-shadow:0 6px 14px rgba(255,95,168,.45)}
+.picture.pop{animation:popIn .5s cubic-bezier(.34,1.56,.64,1)}
+@keyframes popIn{0%{transform:scale(.4) rotate(-10deg)}100%{transform:scale(1)}}
+
+.slots{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;max-width:100%;padding:0 4px}
+.slot{min-width:var(--tile);height:var(--tile);padding:0 10px;border-radius:18px;background:rgba(255,255,255,.55);border:3px dashed rgba(255,95,168,.5);display:grid;place-items:center;font-size:calc(var(--tile)*.55);font-weight:700;color:transparent;transition:all .25s;position:relative}
+.slot.ghost{color:rgba(90,42,94,.32)}
+.wordhint{min-height:46px;display:flex;align-items:center;justify-content:center;font-size:clamp(28px,9vw,42px);font-weight:700;letter-spacing:4px;color:var(--ink);text-shadow:0 2px 0 #fff,0 6px 16px rgba(170,60,130,.25);transition:filter .35s,opacity .35s;padding:0 10px;text-align:center;line-height:1.1}
+.wordhint.sentence{font-size:clamp(20px,6vw,28px);letter-spacing:1px}
+.wordhint.blur{filter:blur(1.7px);opacity:.68}
+.wordhint.hidden{opacity:0;filter:blur(6px);pointer-events:none}
+.wordhint .rime{color:var(--pink-deep)}
+.slot.filled{background:#fff;border:3px solid var(--mint);color:var(--ink);animation:fill .35s cubic-bezier(.34,1.56,.64,1)}
+.slot.sentence{font-size:calc(var(--tile)*.38)}
+.slot.wide,.tile.wide{font-size:calc(var(--tile)*.42);letter-spacing:1px}
+.banner .word .rime{color:#ffe27a}
+@keyframes fill{0%{transform:scale(.6)}60%{transform:scale(1.15)}100%{transform:scale(1)}}
+.slot.next{border-color:var(--pink-deep);background:rgba(255,255,255,.8)}
+
+.tray{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;padding:14px 6px 6px;min-height:calc(var(--tile)*2 + 34px);align-content:flex-start}
+.tile{min-width:var(--tile);height:var(--tile);padding:0 12px;border-radius:20px;background:#fff;box-shadow:0 6px 0 #f0c3dd,0 10px 18px rgba(170,60,130,.2);font-size:calc(var(--tile)*.55);font-weight:700;color:var(--ink);display:grid;place-items:center;transition:transform .15s,opacity .3s;position:relative}
+.tile.sentence{font-size:calc(var(--tile)*.36)}
+.tile:nth-child(3n+1){background:#fff3f9}.tile:nth-child(3n+2){background:#f6f0ff}.tile:nth-child(3n){background:#f0fff9}
+.tile.used{opacity:0;transform:scale(.3) translateY(-30px);pointer-events:none}
+.tile.wrong{animation:shake .4s}
+.tile.hint{animation:hint 1s ease-in-out infinite;box-shadow:0 6px 0 #f0c3dd,0 0 0 5px rgba(255,226,122,.9)}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px) rotate(-4deg)}75%{transform:translateX(8px) rotate(4deg)}}
+@keyframes hint{0%,100%{transform:scale(1)}50%{transform:scale(1.12)}}
+
+.flash{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);font-size:52px;pointer-events:none;animation:flashUp 1.3s ease forwards;z-index:5}
+@keyframes flashUp{0%{opacity:0;transform:translate(-50%,-30%) scale(.5)}20%{opacity:1;transform:translate(-50%,-50%) scale(1.2)}100%{opacity:0;transform:translate(-50%,-90%) scale(1)}}
+
+/* word done banner */
+.banner{position:fixed;inset:0;display:none;align-items:center;justify-content:flex-end;padding-bottom:9vh;flex-direction:column;gap:6px;z-index:6;pointer-events:none}
+.banner.show{display:flex}
+.banner .word{font-size:clamp(44px,16vw,80px);font-weight:700;color:#fff;text-shadow:0 6px 0 var(--pink-deep),0 12px 30px rgba(170,60,130,.4);animation:popIn .6s cubic-bezier(.34,1.56,.64,1)}
+.banner .stars{font-size:44px;letter-spacing:4px;animation:popIn .8s .15s cubic-bezier(.34,1.56,.64,1) both}
+
+/* confetti */
+.confetti{position:fixed;top:-40px;font-size:26px;pointer-events:none;z-index:7;animation:fall linear forwards}
+@keyframes fall{to{transform:translateY(110vh) rotate(720deg);opacity:.2}}
+
+/* ---------- REWARD ---------- */
+#reward{align-items:center;justify-content:center;gap:14px;text-align:center}
+.bigsticker img{width:200px;height:200px;object-fit:contain;animation:hover 3.2s ease-in-out infinite}
+.bigsticker{display:grid;place-items:center;min-height:150px;font-size:130px;animation:popIn .8s cubic-bezier(.34,1.56,.64,1);filter:drop-shadow(0 12px 18px rgba(170,60,130,.35))}
+#reward h2{font-size:30px;color:#fff;text-shadow:0 4px 0 var(--pink-deep)}
+.bigbtn{background:#fff;border-radius:999px;padding:16px 28px;font-size:24px;font-weight:700;box-shadow:var(--shadow);display:flex;gap:10px;align-items:center;color:var(--ink)}
+.bigbtn.primary{background:linear-gradient(90deg,var(--pink-deep),var(--purple));color:#fff}
+.rewardbtns{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;margin-top:10px}
+
+/* ---------- STICKER BOOK ---------- */
+#book{align-items:center;overflow-y:auto}
+.shopPill{background:linear-gradient(90deg,#ffe27a,#ff8fc4);color:#5a2a5e}
+#shop{padding-bottom:0}
+.shoptop{display:flex;align-items:center;justify-content:space-between}
+.shopstage{display:flex;justify-content:center;align-items:center;flex:0 0 auto;margin:4px 0}
+.shopPrincess{width:min(50vw,210px);background:radial-gradient(ellipse at 50% 42%,rgba(255,255,255,.85),rgba(255,255,255,.3) 48%,rgba(255,255,255,0) 68%)}
+.princess{width:100%;height:auto;display:block;filter:drop-shadow(0 10px 14px rgba(170,60,130,.25))}
+.princess.big{animation:hover 3.2s ease-in-out infinite}
+.tabs{display:flex;gap:8px;overflow-x:auto;padding:8px 2px;flex:0 0 auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:1px;background:var(--card);border-radius:18px;padding:8px 12px;font-size:22px;box-shadow:var(--shadow);border:3px solid transparent}
+.tab small{font-size:11px;font-weight:700;color:var(--ink-soft)}
+.tab.on{border-color:var(--pink-deep);background:#fff}
+.tab{position:relative}
+.tab .badge{position:absolute;top:-6px;right:-6px;background:var(--pink-deep);color:#fff;font-size:11px;border-radius:999px;min-width:18px;height:18px;display:grid;place-items:center;padding:0 4px}
+.items{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;overflow-y:auto;flex:1;min-height:0;padding:4px 2px 16px}
+.item{background:var(--card);border-radius:20px;padding:8px 6px;display:flex;flex-direction:column;align-items:center;gap:4px;box-shadow:var(--shadow);border:3px solid transparent;position:relative}
+.item .pv{width:100%;aspect-ratio:3/4;overflow:hidden;display:flex;align-items:flex-start;justify-content:center}
+.item .pv .princess{width:100%;height:100%;filter:none}
+.item .iname{font-size:13px;font-weight:700;line-height:1.1;text-align:center}
+.item .iprice{font-size:14px;font-weight:700;color:var(--pink-deep);background:#fff;border-radius:999px;padding:3px 10px}
+.item.wearing{border-color:var(--mint);background:#f0fff9}
+.item.owned .iprice{color:#1f8a6a}
+.item.cant{opacity:.6}
+.item.cant .iprice{color:var(--ink-soft)}
+.item.can::after{content:'🛒';position:absolute;top:4px;right:6px;font-size:16px}
+.item.wrong{animation:shake .4s}
+.item.locked .pv{filter:grayscale(.9) opacity(.45)}
+.item.locked .iprice{color:var(--ink-soft);background:#f3e4ee}
+.item .ireq{font-size:11px;font-weight:700;color:var(--ink-soft);text-align:center;line-height:1.1}
+.bigsticker .princess{width:170px}
+.bookgrid{display:none}
+.sticker{aspect-ratio:1;background:var(--card);border-radius:22px;display:grid;place-items:center;font-size:44px;box-shadow:var(--shadow)}
+.sticker.empty{opacity:.35;font-size:30px}
+.booktitle{display:flex;align-items:center;width:100%;max-width:440px;justify-content:space-between}
+.booktitle h2{font-size:26px}
+
+/* ---------- PARENT PANEL ---------- */
+#parent{direction:rtl;text-align:right;background:#fff8fc;overflow-y:auto;gap:14px;font-size:16px;z-index:20}
+#parent h2{font-size:24px;color:var(--pink-deep)}
+#parent section{background:#fff;border-radius:18px;padding:14px;box-shadow:var(--shadow)}
+#parent h3{font-size:18px;margin-bottom:8px}
+#parent table{width:100%;border-collapse:collapse}
+#parent td,#parent th{padding:6px 4px;border-bottom:1px solid #f5dcea;text-align:right;font-size:15px}
+#parent td select{width:auto;min-width:64px;margin:0;padding:6px}
+#parent input,#parent select{font-family:inherit;font-size:16px;padding:10px;border-radius:12px;border:2px solid #f3cde3;width:100%;margin-top:6px;background:#fff}
+#parent .row{display:flex;gap:8px;flex-wrap:wrap}
+#parent .row>*{flex:1;min-width:110px}
+.pbtn{background:var(--pink-deep);color:#fff;border-radius:12px;padding:10px 16px;font-weight:700;font-size:16px;margin-top:8px}
+.pbtn.ghost{background:#f3d4ea;color:var(--ink)}
+.pbtn.danger{background:#e45c7b}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.chip{background:#ffe6f3;border-radius:999px;padding:6px 12px;font-size:14px;display:flex;gap:6px;align-items:center}
+.chip button{font-size:14px;color:#c0306f;font-weight:700}
+.toggle{display:flex;justify-content:space-between;align-items:center;padding:6px 0}
+.switch{width:54px;height:30px;border-radius:999px;background:#f3cde3;position:relative;transition:.2s}
+.switch::after{content:'';position:absolute;top:3px;right:3px;width:24px;height:24px;border-radius:50%;background:#fff;transition:.2s;box-shadow:0 2px 6px rgba(0,0,0,.2)}
+.switch.on{background:var(--pink-deep)}.switch.on::after{right:27px}
+.note{font-size:13px;color:var(--ink-soft);margin-top:6px}
+</style>
+</head>
+<body>
+<div class="deco" id="deco"></div>
+
+<!-- HOME -->
+<div class="screen active" id="home">
+  <div class="title">
+    <span class="crown" id="crown">👑</span>
+    <h1>Word Princess</h1>
+    <p>✨ Tap a world to play ✨</p>
+  </div>
+  <div class="worlds" id="worlds"></div>
+  <div class="home-foot">
+    <button class="pill" id="starsPill">⭐ <span id="totalStars">0</span></button>
+    <button class="pill shopPill" id="shopBtn">🛍️ Princess Shop</button>
+  </div>
+</div>
+
+<!-- PLAY -->
+<div class="screen" id="play">
+  <div>
+    <div class="topbar">
+      <button class="iconbtn" id="backBtn">🏠</button>
+      <div class="round"><span id="worldEmoji">🏰</span> <span>⭐ <span id="roundStars">0</span></span></div>
+      <button class="iconbtn" id="hearBtn">🔊</button>
+    </div>
+    <div class="dots" id="dots"></div>
+  </div>
+  <div class="stage">
+    <div class="picture" id="picture"><div class="glow"></div><i class="spark s1">✨</i><i class="spark s2">⭐</i><i class="spark s3">💖</i><img id="picImg" alt="" draggable="false"><span id="pic">🐱</span><span class="spk">🔊</span></div>
+    <div class="wordhint" id="wordhint"></div>
+    <div class="slots" id="slots"></div>
+  </div>
+  <div class="tray" id="tray"></div>
+</div>
+
+<!-- REWARD -->
+<div class="screen" id="reward">
+  <div class="bigsticker" id="bigsticker"></div>
+  <h2 id="rewardTitle">Amazing!</h2>
+  <div class="pill" style="font-size:22px"><span id="rewardStars">⭐ 0</span></div>
+  <div class="pill" style="font-size:18px">💰 <span id="rewardWallet">0</span> stars to spend</div>
+  <div class="rewardbtns">
+    <button class="bigbtn primary" id="shopFromReward">🛍️ Shop</button>
+    <button class="bigbtn" id="againBtn">▶️ Again</button>
+    <button class="bigbtn" id="homeBtn">🏠</button>
+  </div>
+</div>
+
+<!-- PRINCESS SHOP / CLOSET -->
+<div class="screen" id="shop">
+  <div class="shoptop">
+    <button class="iconbtn" id="shopBack">🏠</button>
+    <div class="round">💰 <span id="shopWallet">0</span></div>
+    <span style="width:46px"></span>
+  </div>
+  <div class="shopstage"><div class="shopPrincess" id="shopPrincess"></div></div>
+  <div class="tabs" id="shopTabs"></div>
+  <div class="items" id="shopItems"></div>
+</div>
+
+<!-- PARENT PANEL -->
+<div class="screen" id="parent">
+  <div style="display:flex;justify-content:space-between;align-items:center">
+    <h2>🔧 פינת הורים</h2>
+    <button class="pbtn ghost" id="parentClose" style="margin:0">סגירה</button>
+  </div>
+
+  <section>
+    <h3>התקדמות</h3>
+    <table id="statsTable"></table>
+    <p class="note">לכל עולם יש רמה אחת לכל המילים שלו: 1 = המילה כתובה מתחת לתמונה, 2 = המילה כתובה אבל מטושטשת, 3 = רק תמונה וקול (לחיצה על התמונה מציצה במילה במחיר כוכב), 4 = רק תמונה וקול עם יותר אותיות מבלבלות. בכל רמה יש כ-10 אותיות לבחירה. העולם עולה רמה כשכמעט כל המילים שלו (11 מתוך 12) אויתו ברמה הזאת עם 2 כוכבים לפחות. אפשר לשנות רמה ידנית בטבלה. עולם חדש נפתח כשהעולם הקודם סיים את רמה 1.</p>
+  </section>
+
+  <section>
+    <h3>חנות הנסיכה</h3>
+    <p class="note" id="shopNote"></p>
+    <button class="pbtn ghost" id="bonusStars">🎁 בונוס של 30 כוכבים</button>
+  </section>
+
+  <section>
+    <h3>מילים שקשות לה</h3>
+    <div class="chips" id="hardWords"></div>
+  </section>
+
+  <section>
+    <h3>הגדרות</h3>
+    <div class="toggle"><span>אותיות גדולות (ABC) במקום קטנות (abc)</span><div class="switch" id="upperSwitch"></div></div>
+    <div class="toggle"><span>לאיית את המילה אות-אות בקול אחרי שמסיימים (כבוי: נשמעת רק המילה השלמה)</span><div class="switch" id="spellSwitch"></div></div>
+    <div class="toggle"><span>להשתמש בקול של הטלפון במקום בהקלטות המובנות</span><div class="switch" id="ttsSwitch"></div></div>
+    <label>קול באנגלית<select id="voiceSelect"></select></label>
+    <button class="pbtn ghost" id="testVoice">🔊 בדיקת קול</button>
+    <p class="note" id="speechDiag"></p>
+    <p class="note">כברירת מחדל המשחק משמיע הקלטות מובנות. הקול של הטלפון (באייפון מומלץ "Samantha", באנדרואיד "Google US English") משמש רק למילים שהוספת בעצמך, או אם הפעלת את המתג למעלה. אם אין קול בכלל: באייפון בדקי שמתג ההשתקה בצד לא מופעל והעלי ווליום.</p>
+  </section>
+
+  <section>
+    <h3>הוספת מילה משלך</h3>
+    <div class="row">
+      <label>עולם<select id="customWorld"></select></label>
+      <label>מילה באנגלית<input id="customWord" placeholder="cat"></label>
+      <label>אמוג'י<input id="customEmoji" placeholder="🐱"></label>
+    </div>
+    <button class="pbtn" id="addCustom">➕ הוספה</button>
+    <div class="chips" id="customList"></div>
+  </section>
+
+  <section>
+    <h3>ניהול</h3>
+    <button class="pbtn ghost" id="unlockAll">🔓 פתיחת כל העולמות</button>
+    <button class="pbtn danger" id="resetAll">🗑️ איפוס כל ההתקדמות</button>
+    <p class="note">כדי לפתוח את הפינה הזאת שוב: לחיצה ארוכה על הכתר במסך הבית.</p>
+  </section>
+</div>
+
+<div class="banner" id="banner"><div class="word" id="bannerWord"></div><div class="stars" id="bannerStars"></div></div>
+
+<script>
+/* ================= DATA ================= */
+const WORLDS = [
+  { id:'castle', name:'Princess Castle', emoji:'🏰', unlockStars:0,
+    stickers:['👑','👸','🏰','💎','🎀','🪞','🥿','🧚'],
+    words:[['cat','🐱'],['dog','🐶'],['pig','🐷'],['hat','👒'],['sun','☀️'],['cup','🥤'],['bed','🛏️'],['bus','🚌'],['car','🚗'],['egg','🥚'],['bag','👜'],['box','📦']] },
+  { id:'meadow', name:'Unicorn Meadow', emoji:'🦄', unlockStars:15,
+    stickers:['🦄','🌈','🌸','🦋','⭐','🍓','🧸','🎠'],
+    words:[['sea','🌊'],['cow','🐮'],['bee','🐝'],['fox','🦊'],['owl','🦉'],['ant','🐜'],['key','🔑'],['eye','👁️'],['ear','👂'],['bell','🔔'],['kite','🪁'],['sock','🧦']] },
+  { id:'icecream', name:'Ice Cream Land', emoji:'🍦', unlockStars:35,
+    stickers:['🍦','🍨','🧁','🍩','🍰','🍬','🍫','🥞'],
+    words:[['cake','🎂'],['milk','🥛'],['fish','🐟'],['bird','🐦'],['star','⭐'],['moon','🌙'],['frog','🐸'],['duck','🦆'],['lion','🦁'],['tree','🌳'],['ring','💍'],['bear','🐻']] },
+  { id:'families', name:'Rainbow Families', emoji:'🌈', requires:['icecream'], intro:'p_families',
+    stickers:['🌈','🦋','🌷','🐞','🍄','🎈','🪷','🌻'],
+    words:[['cat','🐱',{fam:'at'}],['hat','👒',{fam:'at'}],['bat','🦇',{fam:'at'}],
+           ['dog','🐶',{fam:'og'}],['log','🪵',{fam:'og'}],['frog','🐸',{fam:'og'}],
+           ['hen','🐔',{fam:'en'}],['pen','🖊️',{fam:'en'}],['ten','🔟',{fam:'en'}],
+           ['man','👨',{fam:'an'}],['pan','🍳',{fam:'an'}],['van','🚐',{fam:'an'}]] },
+  { id:'sounds', name:'Cupcake Sounds', emoji:'🧁', requires:['families'], intro:'p_sounds', digraphs:true,
+    stickers:['🧁','🍪','🍭','🍡','🍧','🥧','🍮','🍯'],
+    words:[['ship','🚢',{tokens:['sh','i','p']}],['sheep','🐑',{tokens:['sh','ee','p']}],['shell','🐚',{tokens:['sh','e','l','l']}],
+           ['chick','🐤',{tokens:['ch','i','c','k']}],['cheese','🧀',{tokens:['ch','ee','s','e']}],['chair','🪑',{tokens:['ch','a','i','r']}],
+           ['bath','🛁',{tokens:['b','a','th']}],['tooth','🦷',{tokens:['t','oo','th']}],['three','3️⃣',{tokens:['th','r','ee']}],
+           ['boot','🥾',{tokens:['b','oo','t']}],['book','📖',{tokens:['b','oo','k']}],['spoon','🥄',{tokens:['s','p','oo','n']}]] },
+  { id:'forest', name:'Lollipop Forest', emoji:'🍭', requires:['icecream'], sentence:true,
+    stickers:['🍭','🍬','🧚','🌳','🦊','🐿️','🍄','🌟'],
+    words:[['I am hot','🥵'],['I am cold','🥶'],['I see mom','👩'],['I like cake','🎂'],['I like milk','🥛'],['I can run','🏃‍♀️'],['I like pink','🩷'],['I see a dog','🐶'],['The sun is hot','🌞'],['I see a star','⭐'],['The pig is pink','🐷'],['I like ice cream','🍦']] },
+  { id:'lagoon', name:'Mermaid Lagoon', emoji:'🧜‍♀️', requires:['families','sounds'], intro:'p_listen', listen:true,
+    stickers:['🧜‍♀️','🐚','🐬','🐠','🪸','🐙','⚓','🏝️'],
+    words:[['cat','🐱'],['dog','🐶'],['sun','☀️'],['cup','🥤'],['bus','🚌'],['egg','🥚'],['cow','🐮'],['fox','🦊'],['key','🔑'],['cake','🎂'],['milk','🥛'],['star','⭐']] }
+];
+const DIGRAPHS=['sh','ch','th','ee','oo'];
+const WORLD_BG={castle:'linear-gradient(145deg,#ffd1e8,#d9c6ff)',meadow:'linear-gradient(145deg,#c9f7e6,#bfe3ff)',icecream:'linear-gradient(145deg,#ffe0c2,#ffc2dc)',families:'linear-gradient(145deg,#fff1b8,#c9f7e6 50%,#d9c6ff)',sounds:'linear-gradient(145deg,#fff3c4,#ffc2dc)',forest:'linear-gradient(145deg,#e3d4ff,#c9f7e6)',lagoon:'linear-gradient(145deg,#bff5f0,#bfe3ff)',challenge:'linear-gradient(145deg,#fff2b3,#ffd8a8)'};
+const IMG_FOR={'I am hot':'hot_face','I am cold':'cold_face','I see mom':'woman','I like cake':'cake','I like milk':'milk','I can run':'runner','I like pink':'pink_heart','I see a dog':'dog','The sun is hot':'sun_face','I see a star':'star','The pig is pink':'pig','I like ice cream':'icecream'};
+const IMG_SET=new Set(["ant", "bag", "bat", "bath", "bear", "bed", "bee", "bell", "bird", "book", "boot", "box", "bus", "cake", "car", "cat", "chair", "cheese", "chick", "cold_face", "cow", "crown", "cup", "dog", "duck", "ear", "ear_icon", "egg", "eye", "fish", "fox", "frog", "hat", "hen", "hot_face", "icecream", "key", "kite", "lion", "log", "man", "milk", "moon", "owl", "pan", "pen", "pet_bird", "pet_bunny", "pet_butterfly", "pet_cat", "pet_dog", "pet_dolphin", "pet_hamster", "pet_lamb", "pet_turtle", "pet_unicorn", "pig", "pink_heart", "place_castle", "ride_horse", "ride_pony", "ring", "runner", "sea", "sheep", "shell", "ship", "sock", "spoon", "star", "sun", "sun_face", "ten", "three", "tooth", "tree", "trophy", "van", "woman", "world_castle", "world_challenge", "world_families", "world_forest", "world_icecream", "world_lagoon", "world_meadow", "world_sounds"]);
+function worldIcon(id,emoji){ return IMG_SET.has('world_'+id)?`<img src="img/world_${id}.png" alt="">`:emoji; }
+function imgFor(text){ const k=IMG_FOR[text]||text.toLowerCase(); return IMG_SET.has(k)?'img/'+k+'.png':null; }
+const CHALLENGE_LEN=10;
+const CONFUSABLE = {b:'dpq',d:'bpq',p:'bdq',q:'bdp',m:'nw',n:'mu',u:'nv',v:'uw',w:'vm',i:'lj',l:'ij',j:'il',c:'oe',o:'ca',e:'co',a:'oe',t:'fl',f:'tl',g:'qy',h:'nk',k:'hx',r:'nv',s:'zc',z:'sx',x:'zk',y:'gv'};
+const SENTENCE_DISTRACTORS = ['big','cat','dog','sun','hot','mom','run','see','is','a','the','I','like','pink','cake','milk','cow','star'];
+const ROUND_LEN = 6;
+const KEY = 'wordPrincess.v1';
+
+/* ================= STATE ================= */
+let state = load();
+function defaultState(){ return { v:5, settings:{upper:true, spell:false, voice:''}, words:{}, worlds:{}, custom:[], unlockedAll:false }; }
+function load(){ try{ const s=JSON.parse(localStorage.getItem(KEY)); if(s&&s.settings){ const st=Object.assign(defaultState(),s); st.settings=Object.assign(defaultState().settings,s.settings);
+  if(s.v!==4){ /* older saves tracked a level per word; now the whole world has one level */
+    Object.values(st.words).forEach(w=>{ w.best=(w.lvl||0)>=1?0:-1; delete w.lvl; }); Object.values(st.worlds).forEach(ws=>{ ws.lvl=0; }); st.v=4; }
+  if(st.v===4){ st.settings.spell=false; st.v=5; }
+  return st; } }catch(e){} return defaultState(); }
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){} }
+function wstate(id){ return state.worlds[id] || (state.worlds[id]={lvl:0,stars:0,stickers:[],rounds:0,lastRound:[]}); }
+function wordKey(w,text){ return w.id+':'+text; }
+function wstat(w,text){ const k=wordKey(w,text); return state.words[k] || (state.words[k]={best:-1,seen:0,miss:0,streak:0}); }
+/* a word is "done" at the world's current level once it was spelled there with at most 2 mistakes */
+function isDone(w,text){ return wstat(w,text).best>=wstate(w.id).lvl; }
+function doneCount(w){ return worldWords(w).filter(([t])=>isDone(w,t)).length; }
+function needCount(w){ const n=worldWords(w).length; return Math.max(Math.min(10,n), n-1); }
+function worldWords(w){ return w.words.concat(state.custom.filter(c=>c.world===w.id).map(c=>[c.word,c.emoji])); }
+function totalStars(){ return Object.values(state.worlds).reduce((a,ws)=>a+(ws.stars||0),0); }
+function requiresOf(w,i){ return w.requires || (i>0?[WORLDS[i-1].id]:[]); }
+function isUnlocked(w,i){ if(state.unlockedAll||i===0) return true; return requiresOf(w,i).every(id=>wstate(id).lvl>=1); }
+
+/* ================= HELPERS ================= */
+const $=id=>document.getElementById(id);
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+function show(id){ document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); $(id).classList.add('active'); }
+function fmt(t){ return state.settings.upper ? t.toUpperCase() : t; }
+function confetti(n=40){
+  const em=['🌸','💖','⭐','🦄','🍭','✨','💜','🍦'];
+  for(let i=0;i<n;i++){ const s=document.createElement('span'); s.className='confetti'; s.textContent=pick(em);
+    s.style.left=Math.random()*100+'vw'; s.style.animationDuration=(1.8+Math.random()*1.6)+'s'; s.style.animationDelay=(Math.random()*.6)+'s'; s.style.fontSize=(18+Math.random()*22)+'px';
+    document.body.appendChild(s); setTimeout(()=>s.remove(),4000); }
+}
+function flash(em){ const d=document.createElement('div'); d.className='flash'; d.textContent=em; document.body.appendChild(d); setTimeout(()=>d.remove(),1300); }
+
+/* ================= AUDIO ================= */
+let actx=null;
+function tone(f,d=0.12,type='sine',vol=0.18,when=0){
+  try{ actx = actx || new (window.AudioContext||window.webkitAudioContext)(); if(actx.state==='suspended') actx.resume();
+    const o=actx.createOscillator(), g=actx.createGain(); o.type=type; o.frequency.value=f;
+    g.gain.setValueAtTime(0.0001,actx.currentTime+when); g.gain.exponentialRampToValueAtTime(vol,actx.currentTime+when+0.01); g.gain.exponentialRampToValueAtTime(0.0001,actx.currentTime+when+d);
+    o.connect(g); g.connect(actx.destination); o.start(actx.currentTime+when); o.stop(actx.currentTime+when+d+0.05);
+  }catch(e){}
+}
+const sfx={ tap:()=>tone(880,0.1), wrong:()=>{tone(180,0.18,'triangle',0.12);}, win:()=>{[523,659,784,1046].forEach((f,i)=>tone(f,0.18,'sine',0.16,i*0.09));}, sticker:()=>{[523,659,784,880,1046,1318].forEach((f,i)=>tone(f,0.22,'triangle',0.14,i*0.1));} };
+
+let voices=[], keepAlive=[], speechLog={supported:'speechSynthesis' in window, primed:false, spoken:0, errors:[]};
+function loadVoices(){ try{ voices=(speechSynthesis.getVoices()||[]).filter(v=>/^en/i.test(v.lang)); }catch(e){ voices=[]; } fillVoiceSelect(); }
+if(speechLog.supported){ loadVoices(); speechSynthesis.onvoiceschanged=loadVoices; }
+function pickVoice(){
+  if(!voices.length) return null;
+  if(state.settings.voice){ const v=voices.find(v=>v.name===state.settings.voice); if(v) return v; }
+  const prefs=['Samantha','Google US English','Microsoft Aria','Microsoft Jenny','Karen','Moira'];
+  for(const p of prefs){ const v=voices.find(v=>v.name.includes(p)); if(v) return v; }
+  return voices.find(v=>v.lang==='en-US')||voices[0];
+}
+/* iOS/Android need speech to be "unlocked" by a user gesture; do it once on the first touch. */
+function primeSpeech(){
+  if(speechLog.primed||!speechLog.supported) return; speechLog.primed=true;
+  try{ const u=new SpeechSynthesisUtterance(' '); u.volume=0; speechSynthesis.speak(u); speechSynthesis.resume(); }catch(e){}
+  try{ actx = actx || new (window.AudioContext||window.webkitAudioContext)(); actx.resume(); }catch(e){}
+}
+['touchstart','pointerdown','mousedown','keydown'].forEach(ev=>document.addEventListener(ev,primeSpeech,{once:true,passive:true}));
+function speak(text,{rate=0.85,pitch=1.15,cancel=true}={}){
+  if(!speechLog.supported) return;
+  const go=()=>{ try{
+    const u=new SpeechSynthesisUtterance(text); u.lang='en-US'; u.rate=rate; u.pitch=pitch; u.volume=1;
+    const v=pickVoice(); if(v) u.voice=v;
+    u.onstart=()=>{ speechLog.spoken++; };
+    u.onerror=e=>{ if(e.error!=='interrupted'&&e.error!=='canceled'){ speechLog.errors.push(e.error||'error'); if(speechLog.errors.length>5) speechLog.errors.shift(); } };
+    keepAlive.push(u); if(keepAlive.length>30) keepAlive.shift(); /* keep references: Safari drops utterances that get garbage-collected */
+    speechSynthesis.resume(); speechSynthesis.speak(u);
+  }catch(e){ speechLog.errors.push(String(e)); } };
+  try{
+    if(cancel && (speechSynthesis.speaking||speechSynthesis.pending)){ speechSynthesis.cancel(); setTimeout(go,120); } /* cancel() right before speak() goes silent on iOS, so wait a beat */
+    else go();
+  }catch(e){ go(); }
+}
+/* Safari sometimes wedges in the "speaking" state; unstick it. */
+setInterval(()=>{ try{ if(speechLog.supported && speechSynthesis.paused) speechSynthesis.resume(); }catch(e){} },3000);
+/* ---- bundled voice clips (audio/*.mp3), played through Web Audio; the phone's own voice is only a fallback ---- */
+const CLIPS=new Set(["l_a", "l_b", "l_c", "l_d", "l_e", "l_f", "l_g", "l_h", "l_i", "l_j", "l_k", "l_l", "l_m", "l_n", "l_o", "l_p", "l_q", "l_r", "l_s", "l_t", "l_u", "l_v", "l_w", "l_x", "l_y", "l_z", "p_amazing", "p_buy", "p_challenge", "p_champion", "p_families", "p_finish", "p_great", "p_hello", "p_level2", "p_level3", "p_level4", "p_listen", "p_locked", "p_need", "p_newitems", "p_sentences", "p_shop", "p_sounds", "p_spell", "p_stars", "p_sticker", "w_a", "w_am", "w_ant", "w_bag", "w_bat", "w_bath", "w_bear", "w_bed", "w_bee", "w_bell", "w_big", "w_bird", "w_book", "w_boot", "w_box", "w_bus", "w_cake", "w_can", "w_car", "w_cat", "w_chair", "w_cheese", "w_chick", "w_cold", "w_cow", "w_cream", "w_cup", "w_dog", "w_duck", "w_ear", "w_egg", "w_eye", "w_fish", "w_fox", "w_frog", "w_hat", "w_hen", "w_hot", "w_i", "w_i_am_cold", "w_i_am_hot", "w_i_can_run", "w_i_like_cake", "w_i_like_ice_cream", "w_i_like_milk", "w_i_like_pink", "w_i_see_a_dog", "w_i_see_a_star", "w_i_see_mom", "w_ice", "w_is", "w_key", "w_kite", "w_like", "w_lion", "w_log", "w_man", "w_milk", "w_mom", "w_moon", "w_owl", "w_pan", "w_pen", "w_pig", "w_pink", "w_ring", "w_run", "w_sea", "w_see", "w_sheep", "w_shell", "w_ship", "w_sock", "w_spoon", "w_star", "w_sun", "w_ten", "w_the", "w_the_pig_is_pink", "w_the_sun_is_hot", "w_three", "w_tooth", "w_tree", "w_van"]);
+const clipCache={}; let playing=[], playGen=0; const clipLog={loaded:0, errors:[]};
+function clipKey(text){ return 'w_'+text.toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,''); }
+function ensureCtx(){ actx = actx || new (window.AudioContext||window.webkitAudioContext)(); if(actx.state==='suspended') actx.resume(); return actx; }
+function loadClip(key){
+  if(clipCache[key]) return clipCache[key];
+  const p=fetch('audio/'+key+'.mp3').then(r=>{ if(!r.ok) throw new Error('HTTP '+r.status); return r.arrayBuffer(); })
+    .then(buf=>new Promise((res,rej)=>ensureCtx().decodeAudioData(buf,res,rej))).then(b=>{ clipLog.loaded++; return b; });
+  clipCache[key]=p; p.catch(e=>{ delete clipCache[key]; clipLog.errors.push(key+': '+(e&&e.message||e)); if(clipLog.errors.length>4) clipLog.errors.shift(); });
+  return p;
+}
+function stopClips(){ playing.forEach(x=>{ try{ x.stop(); }catch(e){} }); playing=[]; }
+async function playClips(keys,{gap=0.1,cancel=true}={}){
+  const ctx=ensureCtx(); /* resume inside the tap, before any await, so iOS unlocks audio */
+  let gen=playGen; if(cancel){ stopClips(); gen=++playGen; try{ if(speechLog.supported) speechSynthesis.cancel(); }catch(e){} }
+  const bufs=await Promise.all(keys.map(loadClip));
+  if(cancel && gen!==playGen) return;
+  let t=ctx.currentTime+0.02;
+  bufs.forEach(b=>{ const src=ctx.createBufferSource(); src.buffer=b; src.connect(ctx.destination); src.start(t); t+=b.duration+gap; playing.push(src); });
+  speechLog.spoken++;
+}
+function useClips(){ return !state.settings.useTTS; }
+function say(text,opts={}){ const k=clipKey(text); if(useClips()&&CLIPS.has(k)) playClips([k],opts).catch(()=>speak(text,opts)); else speak(text,opts); }
+function sayLetter(ch){ const ks=ch.toLowerCase().split('').map(c=>'l_'+c); const tts=()=>speak(ch.toUpperCase().split('').join(' '),{rate:0.8}); if(useClips()&&ks.every(k=>CLIPS.has(k))) playClips(ks,{gap:0.15}).catch(tts); else tts(); }
+function sayPhrase(id,text){ if(useClips()&&CLIPS.has(id)) playClips([id]).catch(()=>speak(text)); else speak(text); }
+function spellOut(tokens,word){
+  tokens=tokens.flatMap(t=>t.split(''));
+  const ks=tokens.map(t=>'l_'+t.toLowerCase()), wk=clipKey(word);
+  const tts=()=>{ speak(tokens.map(t=>t.toUpperCase()).join('. ')+'.',{rate:0.7}); speak(word+'!',{rate:0.8,cancel:false}); };
+  if(useClips()&&CLIPS.has(wk)&&ks.every(k=>CLIPS.has(k))) playClips(ks.concat([wk]),{gap:0.3}).catch(tts); else tts();
+}
+function preloadClips(keys){ if(!useClips()) return; keys.forEach(k=>{ if(CLIPS.has(k)) loadClip(k).catch(()=>{}); }); }
+function speakToken(tok,sentence){ if(sentence) say(tok,{rate:0.9}); else sayLetter(tok); }
+
+/* decorations */
+(function(){ const d=$('deco'); const em=['🦄','🍭','🍦','👑','✨','🌸','💖','🧁','🌈','⭐'];
+  for(let i=0;i<14;i++){ const s=document.createElement('span'); s.textContent=em[i%em.length]; s.style.left=Math.random()*92+'%'; s.style.top=Math.random()*92+'%'; s.style.animationDelay=(Math.random()*8)+'s'; s.style.fontSize=(22+Math.random()*26)+'px'; d.appendChild(s);} })();
+
+/* ================= HOME ================= */
+function renderHome(){
+  const box=$('worlds'); box.innerHTML='';
+  const best=(state.challenge||{}).best, runs=(state.challenge||{}).runs||0;
+  const cb=document.createElement('button'); cb.className='world challenge'; cb.id='challengeBtn';
+  cb.innerHTML=`<div class="em">${worldIcon('challenge','🏆')}</div><div class="info"><div class="name">Princess Challenge</div><div class="sub"><span>📝 10 words</span><span>🔤 14 letters</span><span>⏱ ${best?'Best '+best+'s':'timer'}</span>${runs?`<span>🏅 ${runs}</span>`:''}</div></div><div class="go">▶️</div>`;
+  cb.onclick=startChallenge; box.appendChild(cb);
+  WORLDS.forEach((w,i)=>{
+    const ws=wstate(w.id), words=worldWords(w), unlocked=isUnlocked(w,i);
+    const done=doneCount(w), need=needCount(w);
+    const b=document.createElement('button'); b.className='world'+(unlocked?'':' locked');
+    b.innerHTML=`<div class="em">${worldIcon(w.id,w.emoji)}</div><div class="info"><div class="name">${w.name}</div>
+      <div class="sub">${unlocked?`<span>Level ${ws.lvl+1}</span><span>📝 ${Math.min(done,need)}/${need}</span><span>⭐ ${ws.stars}</span>`:`<span>Finish ${requiresOf(w,i).map(id=>WORLDS.find(x=>x.id===id).emoji).join(' + ')} level 1</span>`}</div>
+      <div class="bar"><i style="width:${Math.round(100*Math.min(done,need)/need)}%"></i></div></div>${unlocked?'<div class="go">▶️</div>':''}`;
+    b.onclick=()=>{ if(!unlocked){ sfx.wrong(); b.classList.add('wrong'); setTimeout(()=>b.classList.remove('wrong'),400); sayPhrase('p_finish','Finish the other world first!'); return; } startRound(w); };
+    box.appendChild(b);
+  });
+  $('totalStars').textContent=wallet();
+}
+
+/* ================= GAME ================= */
+let G=null; // current round
+function chooseRound(w){
+  const ws=wstate(w.id), words=worldWords(w);
+  const weighted=words.map(([t,e,m])=>{ const s=wstat(w,t); let wt=1; if(!isDone(w,t)) wt+=8; if(s.miss>0&&s.streak<2) wt+=3; if(s.seen===0) wt+=2; if((ws.lastRound||[]).includes(t)) wt*=0.35; return {t,e,m:m||{},wt}; });
+  const out=[]; const pool=weighted.slice();
+  const len=w.challenge?CHALLENGE_LEN:ROUND_LEN;
+  while(out.length<Math.min(len,pool.length)){ const sum=pool.reduce((a,x)=>a+x.wt,0); let r=Math.random()*sum; let idx=0; for(;idx<pool.length;idx++){ r-=pool[idx].wt; if(r<=0) break; } idx=Math.min(idx,pool.length-1); out.push(pool[idx]); pool.splice(idx,1); }
+  if(words.some(x=>x[2]&&x[2].fam)) out.sort((a,b)=>(a.m.fam||'').localeCompare(b.m.fam||''));
+  return out;
+}
+function startRound(w){
+  G={w, items:chooseRound(w), i:0, stars:0, sentence:!!w.sentence, listen:!!w.listen, t0:Date.now()};
+  $('worldEmoji').textContent=w.emoji;
+  $('roundStars').textContent='0';
+  clearInterval(G.timer); if(w.challenge){ G.timer=setInterval(()=>{ if(G&&G.w.challenge) $('roundStars').textContent=Math.floor((Date.now()-G.t0)/1000)+'s'; },500); }
+  show('play'); renderDots();
+  const intro=w.intro||(G.sentence?'p_sentences':'p_spell');
+  sayPhrase(intro, {p_sentences:"Let's make sentences!",p_listen:'Listen carefully, and spell the word!',p_families:"Let's spell word families!",p_sounds:"Let's spell new sounds!",p_challenge:'Princess challenge! Spell as fast as you can!'}[intro]||"Let's spell words!");
+  preloadClips('abcdefghijklmnopqrstuvwxyz'.split('').map(c=>'l_'+c).concat(G.items.flatMap(it=>[clipKey(it.t)].concat(G.sentence?it.t.split(' ').map(clipKey):[]))));
+  G.items.forEach(it=>{ const src=imgFor(it.t); if(src){ const pre=new Image(); pre.src=src; (G.preloaded=G.preloaded||[]).push(pre); } });
+  setTimeout(nextItem,w.challenge?2600:900);
+}
+function renderDots(){ $('dots').innerHTML=G.items.map((_,k)=>`<b class="${k<G.i?'done':k===G.i?'now':''}"></b>`).join(''); }
+function tokensOf(text,sentence){ return sentence? text.split(' ') : text.split(''); }
+function buildTray(tokens,tier,sentence){
+  let extra=[];
+  if(sentence){
+    const need = tier<=1?2:3;
+    const c=shuffle(SENTENCE_DISTRACTORS.filter(x=>!tokens.includes(x)));
+    extra=c.slice(0,need);
+  } else {
+    const need = Math.max(G.w.challenge?14:10, tokens.length+3) - tokens.length; /* about ten tiles to choose from, fourteen in the challenge */
+    const low=tokens.map(t=>t.toLowerCase());
+    const alpha=shuffle('abcdefghijklmnopqrstuvwxyz'.split('').filter(c=>!low.includes(c)));
+    let conf=shuffle([...new Set(low.flatMap(c=>c.length>1?[]:(CONFUSABLE[c]||'').split('')))].filter(c=>!low.includes(c)));
+    /* digraph words: the pair's own letters and the other pairs are the natural traps */
+    const pairs=low.filter(c=>c.length>1);
+    if(pairs.length){ const traps=shuffle([...new Set(pairs.flatMap(p=>p.split('')).concat(DIGRAPHS))].filter(c=>!low.includes(c))); conf=traps.slice(0,tier===0?1:2).concat(conf); }
+    const nConf = tier===0?1: tier===1?2: tier===2?3:4;
+    extra=conf.slice(0,nConf);
+    for(const c of alpha){ if(extra.length>=need) break; if(!extra.includes(c)) extra.push(c); }
+  }
+  return shuffle(tokens.concat(extra));
+}
+function nextItem(){
+  if(!G) return;
+  if(G.i>=G.items.length) return endRound();
+  const it=G.items[G.i], tier=Math.min(wstate(G.w.id).lvl,3);
+  G.cur={text:it.t, emoji:it.e, tokens:(it.m&&it.m.tokens)||tokensOf(it.t,G.sentence), pos:0, mistakes:0, wrongHere:0, tier, fam:it.m&&it.m.fam};
+  renderDots();
+  const pic=$('picture'); pic.classList.remove('pop'); void pic.offsetWidth; pic.classList.add('pop'); $('pic').textContent=G.listen?'👂':it.e;
+  pic.style.setProperty('--pbg', WORLD_BG[G.w.id]||WORLD_BG.castle);
+  const src=G.listen?'img/ear_icon.png':imgFor(it.t), im=$('picImg');
+  if(src){ pic.classList.add('has-img','loading'); im.onload=()=>pic.classList.remove('loading'); im.onerror=()=>pic.classList.remove('has-img','loading'); im.src=src; if(im.complete&&im.naturalWidth) pic.classList.remove('loading'); } else { pic.classList.remove('has-img','loading'); im.removeAttribute('src'); }
+  const nxi=G.items[G.i+1]; if(nxi){ const ns=imgFor(nxi.t); if(ns){ const pre=new Image(); pre.src=ns; } }
+  // slots
+  const slots=$('slots'); slots.innerHTML='';
+  G.cur.tokens.forEach((tok,k)=>{ const d=document.createElement('div'); d.className='slot'+(G.sentence?' sentence':'')+(tok.length>1&&!G.sentence?' wide':'')+(k===0?' next':''); d.textContent=fmt(tok); d.dataset.k=k; slots.appendChild(d); });
+  showHint(G.listen?'hidden':tier===0?'clear':tier===1?'blur':'hidden');
+  // tray
+  const tray=$('tray'); tray.innerHTML='';
+  const tiles=buildTray(G.cur.tokens,tier,G.sentence); $('play').classList.toggle('many',tiles.length>12);
+  tiles.forEach(tok=>{ const b=document.createElement('button'); b.className='tile'+(G.sentence?' sentence':'')+(tok.length>1&&!G.sentence?' wide':''); b.textContent=fmt(tok); b.dataset.tok=tok; b.onclick=()=>tapTile(b); tray.appendChild(b); });
+  setTimeout(()=>say(it.t,{rate:0.8}),350);
+  if(G.listen) setTimeout(()=>{ if(G&&G.cur&&G.cur.text===it.t&&!G.cur.done&&G.cur.pos===0) say(it.t,{rate:0.8}); },2200);
+}
+function showHint(mode){
+  const h=$('wordhint'), c=G.cur; h.className='wordhint'+(G.sentence?' sentence':'')+(mode==='blur'?' blur':mode==='hidden'?' hidden':'');
+  if(c.fam&&c.text.endsWith(c.fam)) h.innerHTML=fmt(c.text.slice(0,-c.fam.length))+'<span class="rime">'+fmt(c.fam)+'</span>'; else h.textContent=fmt(c.text);
+}
+function setGhost(on,faint){ document.querySelectorAll('.slot:not(.filled)').forEach(s=>{ s.classList.toggle('ghost',on); s.classList.toggle('faint',!!faint); }); }
+function peek(){ if(!G||!G.cur||G.cur.done) return; say(G.cur.text,{rate:0.8});
+  if(!G.listen && G.cur.tier===2 && !G.cur.peeked){ G.cur.peeked=true; G.cur.mistakes++; showHint('clear'); clearTimeout(G.peekTimer); G.peekTimer=setTimeout(()=>{ if(G&&G.cur&&!G.cur.done) showHint('hidden'); },1500); } }
+function tapTile(b){
+  if(!G||!G.cur||G.cur.done) return;
+  const c=G.cur, expected=c.tokens[c.pos], tok=b.dataset.tok;
+  if(tok===expected){
+    /* tiles are silent by request: only the whole word is spoken */
+    b.classList.add('used'); document.querySelectorAll('.tile.hint').forEach(h=>h.classList.remove('hint'));
+    const slot=document.querySelector(`.slot[data-k="${c.pos}"]`); slot.classList.remove('ghost','next'); slot.classList.add('filled'); slot.textContent=fmt(tok);
+    c.pos++; c.wrongHere=0;
+    const nx=document.querySelector(`.slot[data-k="${c.pos}"]`); if(nx) nx.classList.add('next');
+    if(c.pos===c.tokens.length) wordDone();
+  } else {
+    sfx.wrong(); c.mistakes++; c.wrongHere++;
+    b.classList.remove('wrong'); void b.offsetWidth; b.classList.add('wrong');
+    if(c.wrongHere>=(c.tier>=3?3:2)){ const h=[...document.querySelectorAll('.tile:not(.used)')].find(t=>t.dataset.tok===expected); if(h) h.classList.add('hint'); }
+  }
+}
+function wordDone(){
+  const c=G.cur; c.done=true; clearTimeout(G.ghostTimer);
+  const stars=c.mistakes===0?3:c.mistakes<=2?2:1;
+  G.stars+=stars; $('roundStars').textContent=G.stars;
+  // update mastery
+  const s=wstat(G.w,c.text), ws=wstate(G.w.id); s.seen++;
+  if(c.mistakes===0) s.streak++; else { s.streak=0; s.miss++; }
+  if(stars>=2 && s.best<ws.lvl) s.best=ws.lvl;
+  ws.stars+=stars; save();
+  // speak
+  if(G.sentence){ say(c.text,{rate:0.85}); }
+  else if(state.settings.spell){ spellOut(c.tokens,c.text); }
+  else say(c.text,{rate:0.8});
+  sfx.win(); confetti(stars*12);
+  const bw=$('bannerWord'); if(c.fam&&c.text.endsWith(c.fam)){ const head=c.text.slice(0,-c.fam.length); bw.innerHTML=fmt(head)+'<span class="rime">'+fmt(c.fam)+'</span>'; } else bw.textContent=fmt(c.text); $('bannerStars').textContent='⭐'.repeat(stars); $('banner').classList.add('show');
+  const wait=G.sentence?2200:(state.settings.spell?3400:2200);
+  setTimeout(()=>{ $('banner').classList.remove('show'); G.i++; nextItem(); },wait);
+}
+function endRound(){
+  clearInterval(G.timer);
+  if(G.w.challenge){
+    const secs=Math.max(1,Math.round((Date.now()-G.t0)/1000)); const ch=state.challenge||(state.challenge={best:0,runs:0});
+    ch.runs++; const record=!ch.best||secs<ch.best; if(record) ch.best=secs; save();
+    $('bigsticker').innerHTML='<img src="img/trophy.png" alt="">'; $('rewardStars').textContent=`⏱ ${secs}s · +${G.stars} ⭐`; $('rewardWallet').textContent=wallet();
+    $('rewardTitle').textContent=record?'New record! Princess Champion!':'Princess Champion!';
+    show('reward'); sfx.sticker(); confetti(90); sayPhrase('p_champion','You did it! You are a princess champion!'); return;
+  }
+  const ws=wstate(G.w.id); ws.rounds++; ws.lastRound=G.items.map(x=>x.t);
+  let levelUp=false, newItems=false; if(doneCount(G.w)>=needCount(G.w) && ws.lvl<3){ const before=TIERS.filter((T,t)=>t&&tierOpen(t)).length; ws.lvl++; levelUp=true; newItems=TIERS.filter((T,t)=>t&&tierOpen(t)).length>before; }
+  save();
+  $('bigsticker').innerHTML=levelUp?'<img src="img/trophy.png" alt="">':princessSVG(shopState().equipped,'big');
+  $('rewardStars').textContent='+'+G.stars+' ⭐'; $('rewardWallet').textContent=wallet();
+  $('rewardTitle').textContent=newItems?`Level ${ws.lvl+1}! New shop items! 🎁`:levelUp?`Level ${ws.lvl+1}!`:'You earned stars!';
+  show('reward'); sfx.sticker(); confetti(70);
+  if(newItems) setTimeout(()=>sayPhrase('p_newitems','New things are waiting in the princess shop!'),2600);
+  if(levelUp) sayPhrase('p_level'+(ws.lvl+1),`Level up! Welcome to level ${ws.lvl+1}!`); else sayPhrase('p_stars',"Great job! You earned stars! Let's dress up the princess!");
+}
+
+/* ================= PRINCESS + SHOP ================= */
+const SKIN='#f8cfae', SKIN_D='#e9b48f';
+function starPts(cx,cy,r1,r2,n=5){ let p=[]; for(let i=0;i<n*2;i++){ const r=i%2?r2:r1, a=-Math.PI/2+i*Math.PI/n; p.push((cx+r*Math.cos(a)).toFixed(1)+','+(cy+r*Math.sin(a)).toFixed(1)); } return p.join(' '); }
+const heartPath=(cx,cy,s)=>`M${cx} ${cy+s} L${cx-s} ${cy} Q${cx-s} ${cy-s*0.9} ${cx-s/2} ${cy-s*0.8} Q${cx} ${cy-s*0.6} ${cx} ${cy-s*0.3} Q${cx} ${cy-s*0.6} ${cx+s/2} ${cy-s*0.8} Q${cx+s} ${cy-s*0.9} ${cx+s} ${cy} Z`;
+const dots=(c,pts,r=3)=>pts.map(([x,y])=>`<circle cx="${x}" cy="${y}" r="${r}" fill="${c}"/>`).join('');
+const SPARKS=(c='#fff')=>[[80,250],[150,230],[110,275],[165,278],[70,215]].map(([x,y])=>`<polygon points="${starPts(x,y,5,2)}" fill="${c}" opacity=".9"/>`).join('');
+/* ---- clothing builders (canvas 240x320: shoulders y≈150, waist y≈198, hem y≈292) ---- */
+function topSVG(c1,c2,style,extra=''){
+  const bod=`<path d="M92 150 Q120 140 148 150 L142 198 L98 198 Z" fill="${c1}"/>`;
+  let sl='';
+  if(style==='puff') sl=`<circle cx="88" cy="154" r="13" fill="${c1}"/><circle cx="152" cy="154" r="13" fill="${c1}"/>`;
+  else if(style==='tee') sl=`<path d="M92 150 L74 162 L80 176 L96 168 Z" fill="${c1}"/><path d="M148 150 L166 162 L160 176 L144 168 Z" fill="${c1}"/>`;
+  else if(style==='long') sl=`<path d="M92 152 Q68 184 70 212 L80 214 Q84 190 100 166 Z" fill="${c1}"/><path d="M148 152 Q172 184 170 212 L160 214 Q156 190 140 166 Z" fill="${c1}"/>`;
+  else if(style==='strap') sl=`<rect x="100" y="140" width="5" height="14" fill="${c2}"/><rect x="135" y="140" width="5" height="14" fill="${c2}"/>`;
+  return bod+sl+`<path d="M98 198 Q120 206 142 198" stroke="${c2}" stroke-width="4" fill="none"/>`+extra;
+}
+function skirtSVG(c1,c2,style,extra=''){
+  let k='';
+  if(style==='ball') k=`<path d="M98 198 L142 198 Q206 236 200 292 L40 292 Q34 236 98 198 Z" fill="${c1}"/><path d="M120 198 Q150 250 158 292 L82 292 Q90 250 120 198 Z" fill="${c2}" opacity=".75"/>`;
+  else if(style==='mermaid') k=`<path d="M98 198 L142 198 L150 252 Q120 266 90 252 Z" fill="${c1}"/><path d="M90 252 Q120 266 150 252 L178 292 L62 292 Z" fill="${c2}"/>`;
+  else if(style==='tutu') k=`<path d="M98 198 L142 198 L166 246 Q150 256 140 244 Q130 258 120 246 Q110 258 100 244 Q90 256 74 246 Z" fill="${c1}"/><path d="M98 198 L142 198 L156 232 Q120 244 84 232 Z" fill="${c2}" opacity=".6"/>`;
+  else if(style==='mini') k=`<path d="M98 198 L142 198 L152 240 L88 240 Z" fill="${c1}"/><path d="M98 198 L142 198 L144 206 L96 206 Z" fill="${c2}"/>`;
+  else if(style==='pleat') k=`<path d="M98 198 L142 198 L170 270 L70 270 Z" fill="${c1}"/>`+[90,105,120,135,150].map(x=>`<line x1="${x}" y1="200" x2="${x+(x-120)*0.7}" y2="270" stroke="${c2}" stroke-width="3"/>`).join('');
+  else k=`<path d="M98 198 L142 198 L180 292 L60 292 Z" fill="${c1}"/><path d="M120 198 L152 292 L88 292 Z" fill="${c2}" opacity=".7"/>`;
+  return k+extra;
+}
+function dressSVG(c1,c2,style,extra='',top='puff'){ return topSVG(c1,c2,top)+skirtSVG(c1,c2,style)+extra; }
+const shoes=(c,hi='#fff')=>`<ellipse cx="104" cy="295" rx="15" ry="7" fill="${c}"/><ellipse cx="136" cy="295" rx="15" ry="7" fill="${c}"/><ellipse cx="100" cy="292" rx="5" ry="2" fill="${hi}" opacity=".8"/><ellipse cx="132" cy="292" rx="5" ry="2" fill="${hi}" opacity=".8"/>`;
+const boots=(c,c2,h=22)=>`<rect x="90" y="${298-h}" width="28" height="${h}" rx="8" fill="${c}"/><rect x="122" y="${298-h}" width="28" height="${h}" rx="8" fill="${c}"/><rect x="90" y="${298-h}" width="28" height="6" rx="3" fill="${c2}"/><rect x="122" y="${298-h}" width="28" height="6" rx="3" fill="${c2}"/>`;
+const ballet=(c)=>`<ellipse cx="104" cy="295" rx="15" ry="7" fill="${c}"/><ellipse cx="136" cy="295" rx="15" ry="7" fill="${c}"/><path d="M96 290 L112 272 M112 290 L96 272" stroke="${c}" stroke-width="3"/><path d="M128 290 L144 272 M144 290 L128 272" stroke="${c}" stroke-width="3"/>`;
+const heels=(c,b)=>`<ellipse cx="104" cy="295" rx="15" ry="7" fill="${c}"/><ellipse cx="136" cy="295" rx="15" ry="7" fill="${c}"/><path d="${heartPath(104,289,4)}" fill="${b}"/><path d="${heartPath(136,289,4)}" fill="${b}"/>`;
+const glasses=(c,shape='round',lens=c)=>{ const l=(cx)=>shape==='heart'?`<path d="${heartPath(cx,94,11)}" fill="${lens}" opacity=".85"/>`:shape==='star'?`<polygon points="${starPts(cx,96,13,6)}" fill="${lens}" opacity=".85"/>`:shape==='cat'?`<path d="M${cx-12} 90 Q${cx} 84 ${cx+13} 86 L${cx+10} 104 Q${cx} 108 ${cx-12} 102 Z" fill="${lens}" opacity=".85"/>`:`<ellipse cx="${cx}" cy="96" rx="12" ry="10" fill="${lens}" opacity=".85"/>`; return l(103)+l(137)+`<path d="M115 94 Q120 90 125 94" stroke="${c}" stroke-width="3" fill="none"/><line x1="91" y1="92" x2="76" y2="88" stroke="${c}" stroke-width="3"/><line x1="149" y1="92" x2="164" y2="88" stroke="${c}" stroke-width="3"/>`; };
+const bag=(body,c2)=>`<path d="M72 218 Q60 226 62 240" stroke="${c2}" stroke-width="3" fill="none"/>`+body;
+const tiara=(fill,stroke,gem)=>`<path d="M90 60 L100 42 L110 56 L120 36 L130 56 L140 42 L150 60 Z" fill="${fill}" stroke="${stroke}" stroke-width="2"/><circle cx="120" cy="44" r="4" fill="${gem}"/>`;
+const earr=(l,r)=>l+r;
+const PET=(id)=>`img/${id}.png`;
+
+const ITEMS=[
+  /* ---------- hair ---------- */
+  {id:'hair_brown',slot:'hair',name:'Brown Hair',price:0,tier:1,color:'#6b3e2e'},
+  {id:'hair_blonde',slot:'hair',name:'Golden Hair',price:15,tier:1,color:'#f2c85b'},
+  {id:'hair_black',slot:'hair',name:'Black Hair',price:15,tier:1,color:'#2c2238'},
+  {id:'hair_red',slot:'hair',name:'Red Hair',price:20,tier:2,color:'#d1552c'},
+  {id:'hair_pink',slot:'hair',name:'Pink Hair',price:30,tier:3,color:'#ff7fc0'},
+  {id:'hair_purple',slot:'hair',name:'Purple Hair',price:30,tier:4,color:'#9a6cff'},
+  {id:'hair_blue',slot:'hair',name:'Ocean Hair',price:35,tier:4,color:'#5bb7ff'},
+  {id:'hair_rainbow',slot:'hair',name:'Rainbow Hair',price:90,tier:5,color:'url(#rainbowHair)'},
+  /* ---------- dresses ---------- */
+  {id:'dress_simple',slot:'dress',name:'Simple Dress',price:0,tier:1,svg:dressSVG('#ffd6e8','#ffb3d1','aline')},
+  {id:'dress_rose',slot:'dress',name:'Rose Gown',price:30,tier:1,svg:dressSVG('#ff6fb1','#ffb3d1','ball')},
+  {id:'dress_dots',slot:'dress',name:'Polka Dress',price:25,tier:1,svg:dressSVG('#ff8fc4','#fff','aline',dots('#fff',[[100,230],[130,250],[110,270],[145,280],[90,262],[125,215]]))},
+  {id:'dress_sky',slot:'dress',name:'Sky Gown',price:40,tier:2,svg:dressSVG('#7fc8ff','#cfeaff','ball')},
+  {id:'dress_mint',slot:'dress',name:'Mint Dress',price:45,tier:2,svg:dressSVG('#7ee8c6','#c9f7e6','aline')},
+  {id:'dress_strawberry',slot:'dress',name:'Strawberry Dress',price:50,tier:2,svg:dressSVG('#ff4f7d','#ffd6e8','tutu',dots('#ffe27a',[[100,215],[135,225],[115,235]],2.5))},
+  {id:'dress_sun',slot:'dress',name:'Sunshine Dress',price:55,tier:3,svg:dressSVG('#ffd84d','#fff1b8','aline')},
+  {id:'dress_lilac',slot:'dress',name:'Lilac Mermaid',price:60,tier:3,svg:dressSVG('#b78cff','#e3d4ff','mermaid')},
+  {id:'dress_ballerina',slot:'dress',name:'Ballerina Dress',price:65,tier:3,svg:dressSVG('#ffb3d1','#fff','tutu','',"strap")},
+  {id:'dress_peach',slot:'dress',name:'Peach Gown',price:70,tier:3,svg:dressSVG('#ffb08a','#ffe0c2','ball',SPARKS('#fff3e0'))},
+  {id:'dress_gold',slot:'dress',name:'Golden Gown',price:90,tier:4,svg:dressSVG('#f4b63a','#ffe27a','ball',SPARKS('#fff6c8'))},
+  {id:'dress_ocean',slot:'dress',name:'Ocean Mermaid',price:95,tier:4,svg:dressSVG('#3fa9f5','#7ee8c6','mermaid',SPARKS('#e0ffff'))},
+  {id:'dress_ruby',slot:'dress',name:'Ruby Gown',price:100,tier:4,svg:dressSVG('#d91e4f','#ff8fa8','ball',dots('#ffe27a',[[95,240],[145,236],[120,268],[80,278],[160,280]],3))},
+  {id:'dress_rainbow',slot:'dress',name:'Rainbow Gown',price:120,tier:5,svg:dressSVG('url(#rainbow)','rgba(255,255,255,.35)','ball',SPARKS())},
+  {id:'dress_night',slot:'dress',name:'Starry Night',price:110,tier:5,svg:dressSVG('#3b2a7a','#7b5cff','mermaid',SPARKS('#ffe27a'))},
+  {id:'dress_queen',slot:'dress',name:'Queen Gown',price:160,tier:6,svg:dressSVG('#8a2be2','#f4b63a','ball',SPARKS('#ffe27a')+`<path d="M60 292 L180 292 L176 284 L64 284 Z" fill="#f4b63a"/>`)},
+  /* ---------- tops ---------- */
+  {id:'top_white',slot:'top',name:'White Tee',price:15,tier:1,svg:topSVG('#fff','#ffd6e8','tee')},
+  {id:'top_pink',slot:'top',name:'Pink Puff Top',price:20,tier:1,svg:topSVG('#ff8fc4','#ffd6e8','puff')},
+  {id:'top_heart',slot:'top',name:'Heart Tee',price:25,tier:2,svg:topSVG('#fff','#ff8fc4','tee',`<path d="${heartPath(120,172,10)}" fill="#ff5fa8"/>`)},
+  {id:'top_stripes',slot:'top',name:'Stripy Top',price:30,tier:2,svg:topSVG('#fff','#7fc8ff','long',[158,170,182].map(y=>`<path d="M96 ${y} L144 ${y}" stroke="#7fc8ff" stroke-width="5"/>`).join(''))},
+  {id:'top_sparkle',slot:'top',name:'Sparkle Top',price:45,tier:3,svg:topSVG('#b78cff','#e3d4ff','strap',dots('#fff',[[108,165],[130,160],[118,185],[136,180]],2.5))},
+  {id:'top_rainbow',slot:'top',name:'Rainbow Top',price:60,tier:4,svg:topSVG('url(#rainbow)','#fff','puff')},
+  {id:'top_gold',slot:'top',name:'Golden Top',price:70,tier:4,svg:topSVG('#f4b63a','#ffe27a','long')},
+  {id:'top_star',slot:'top',name:'Star Tee',price:35,tier:3,svg:topSVG('#ffe27a','#ff8fc4','tee',`<polygon points="${starPts(120,172,11,5)}" fill="#ff5fa8"/>`)},
+  /* ---------- skirts ---------- */
+  {id:'skirt_pink',slot:'skirt',name:'Pink Skirt',price:15,tier:1,svg:skirtSVG('#ff8fc4','#ffd6e8','aline')},
+  {id:'skirt_tutu',slot:'skirt',name:'Tutu',price:30,tier:1,svg:skirtSVG('#ffd6e8','#fff','tutu')},
+  {id:'skirt_blue',slot:'skirt',name:'Blue Mini',price:25,tier:2,svg:skirtSVG('#7fc8ff','#cfeaff','mini')},
+  {id:'skirt_pleat',slot:'skirt',name:'Pleated Skirt',price:35,tier:2,svg:skirtSVG('#b78cff','#e3d4ff','pleat')},
+  {id:'skirt_mint',slot:'skirt',name:'Mint Twirl',price:40,tier:3,svg:skirtSVG('#7ee8c6','#c9f7e6','ball')},
+  {id:'skirt_rainbow_tutu',slot:'skirt',name:'Rainbow Tutu',price:70,tier:4,svg:skirtSVG('url(#rainbow)','rgba(255,255,255,.4)','tutu')},
+  {id:'skirt_gold',slot:'skirt',name:'Golden Skirt',price:75,tier:4,svg:skirtSVG('#f4b63a','#ffe27a','pleat',SPARKS('#fff6c8'))},
+  {id:'skirt_star',slot:'skirt',name:'Starry Skirt',price:85,tier:5,svg:skirtSVG('#3b2a7a','#7b5cff','ball',SPARKS('#ffe27a'))},
+  /* ---------- shoes ---------- */
+  {id:'shoes_pink',slot:'shoes',name:'Pink Flats',price:15,tier:1,svg:shoes('#ff8fc4')},
+  {id:'shoes_sneakers',slot:'shoes',name:'Sneakers',price:20,tier:1,svg:shoes('#fff','#ff8fc4')+`<path d="M92 295 L116 295 M124 295 L148 295" stroke="#ff8fc4" stroke-width="3"/>`},
+  {id:'shoes_ballet',slot:'shoes',name:'Ballerina Shoes',price:30,tier:1,svg:ballet('#ffb3d1')},
+  {id:'shoes_red',slot:'shoes',name:'Red Shoes',price:25,tier:2,svg:shoes('#e8334f')},
+  {id:'shoes_rain',slot:'shoes',name:'Rain Boots',price:35,tier:2,svg:boots('#ffd84d','#fff1b8',26)+dots('#ff8fc4',[[98,286],[110,292],[130,286],[142,292]],2.5)},
+  {id:'shoes_glass',slot:'shoes',name:'Glass Slippers',price:35,tier:3,svg:`<ellipse cx="104" cy="295" rx="15" ry="7" fill="#cfeeff" stroke="#8fd3ff" stroke-width="2"/><ellipse cx="136" cy="295" rx="15" ry="7" fill="#cfeeff" stroke="#8fd3ff" stroke-width="2"/><ellipse cx="100" cy="292" rx="5" ry="2" fill="#fff"/><ellipse cx="132" cy="292" rx="5" ry="2" fill="#fff"/>`},
+  {id:'shoes_princess',slot:'shoes',name:'Princess Heels',price:45,tier:3,svg:heels('#ff5fa8','#ffe27a')},
+  {id:'shoes_cowboy',slot:'shoes',name:'Cowboy Boots',price:50,tier:3,svg:boots('#c47a3a','#f4b63a',30)+`<polygon points="${starPts(104,285,5,2)}" fill="#fff"/><polygon points="${starPts(136,285,5,2)}" fill="#fff"/>`},
+  {id:'shoes_boots',slot:'shoes',name:'Purple Boots',price:40,tier:3,svg:boots('#9a6cff','#e3d4ff')},
+  {id:'shoes_gold',slot:'shoes',name:'Golden Heels',price:50,tier:4,svg:heels('#f4b63a','#fff6c8')},
+  {id:'shoes_tall',slot:'shoes',name:'Tall Pink Boots',price:60,tier:4,svg:boots('#ff5fa8','#ffb3d1',44)},
+  {id:'shoes_sparkle',slot:'shoes',name:'Sparkly Boots',price:80,tier:5,svg:boots('#3b2a7a','#7b5cff',36)+dots('#ffe27a',[[98,280],[110,290],[130,280],[142,290],[104,270],[136,270]],2.5)},
+  {id:'shoes_rainbow',slot:'shoes',name:'Rainbow Ballet',price:90,tier:5,svg:ballet('url(#rainbow)')},
+  /* ---------- head ---------- */
+  {id:'head_bow',slot:'head',name:'Pink Bow',price:15,tier:1,svg:`<ellipse cx="146" cy="52" rx="12" ry="8" fill="#ff5fa8" transform="rotate(-20 146 52)"/><ellipse cx="166" cy="56" rx="12" ry="8" fill="#ff5fa8" transform="rotate(20 166 56)"/><circle cx="156" cy="55" r="5" fill="#ff8fc4"/>`},
+  {id:'head_band',slot:'head',name:'Pearl Headband',price:20,tier:1,svg:`<path d="M78 70 Q120 36 162 70" stroke="#fff" stroke-width="5" fill="none"/>`+dots('#ffd6e8',[[90,56],[105,46],[120,42],[135,46],[150,56]],3)},
+  {id:'head_silver',slot:'head',name:'Silver Tiara',price:25,tier:1,svg:tiara('#dfe6f2','#b9c6dd','#ff8fc4')},
+  {id:'head_flower',slot:'head',name:'Flower Crown',price:35,tier:2,svg:[88,100,112,124,136,148].map((x,i)=>`<circle cx="${x}" cy="${52+Math.abs(i-2.5)*3}" r="7" fill="${['#ff8fc4','#ffe27a','#9ef0d9','#ff8fc4','#ffe27a','#b78cff'][i]}"/><circle cx="${x}" cy="${52+Math.abs(i-2.5)*3}" r="2.5" fill="#fff"/>`).join('')},
+  {id:'head_cat',slot:'head',name:'Cat Ears',price:30,tier:2,svg:`<polygon points="84,66 90,36 108,56" fill="#3b2a4a"/><polygon points="156,66 150,36 132,56" fill="#3b2a4a"/><polygon points="88,62 92,44 102,56" fill="#ff8fc4"/><polygon points="152,62 148,44 138,56" fill="#ff8fc4"/>`},
+  {id:'head_bunny',slot:'head',name:'Bunny Ears',price:30,tier:2,svg:`<ellipse cx="100" cy="30" rx="9" ry="26" fill="#fff" stroke="#f0c3dd" stroke-width="2"/><ellipse cx="140" cy="30" rx="9" ry="26" fill="#fff" stroke="#f0c3dd" stroke-width="2"/><ellipse cx="100" cy="32" rx="4" ry="18" fill="#ffb3d1"/><ellipse cx="140" cy="32" rx="4" ry="18" fill="#ffb3d1"/>`},
+  {id:'head_party',slot:'head',name:'Party Hat',price:25,tier:2,svg:`<polygon points="120,6 100,60 140,60" fill="#ff8fc4"/>`+dots('#ffe27a',[[118,30],[112,48],[128,46]],3)+`<circle cx="120" cy="8" r="5" fill="#ffe27a"/>`},
+  {id:'head_sunhat',slot:'head',name:'Sun Hat',price:40,tier:3,svg:`<ellipse cx="120" cy="60" rx="58" ry="12" fill="#ffe27a"/><path d="M90 60 Q92 30 120 30 Q148 30 150 60 Z" fill="#ffd84d"/><path d="M90 58 Q120 50 150 58" stroke="#ff8fc4" stroke-width="5" fill="none"/>`},
+  {id:'head_gold',slot:'head',name:'Gold Crown',price:50,tier:3,svg:`<path d="M88 62 L92 38 L106 52 L120 30 L134 52 L148 38 L152 62 Z" fill="#f4b63a" stroke="#d99a1e" stroke-width="2"/><circle cx="120" cy="40" r="5" fill="#e8334f"/><circle cx="104" cy="50" r="3.5" fill="#3fa9f5"/><circle cx="136" cy="50" r="3.5" fill="#3fa9f5"/>`},
+  {id:'head_butterfly',slot:'head',name:'Butterfly Clip',price:35,tier:3,svg:`<ellipse cx="150" cy="48" rx="10" ry="7" fill="#b78cff" transform="rotate(-30 150 48)"/><ellipse cx="166" cy="56" rx="10" ry="7" fill="#b78cff" transform="rotate(30 166 56)"/><ellipse cx="152" cy="60" rx="7" ry="5" fill="#ff8fc4"/><ellipse cx="164" cy="66" rx="7" ry="5" fill="#ff8fc4"/><line x1="158" y1="48" x2="158" y2="66" stroke="#3b2a4a" stroke-width="2"/>`},
+  {id:'head_halo',slot:'head',name:'Angel Halo',price:45,tier:3,svg:`<ellipse cx="120" cy="34" rx="30" ry="7" fill="none" stroke="#ffe27a" stroke-width="5"/>`},
+  {id:'head_rose',slot:'head',name:'Rose Tiara',price:60,tier:4,svg:tiara('#ff8fc4','#ff5fa8','#fff')+dots('#ff5fa8',[[100,44],[140,44]],4)},
+  {id:'head_hennin',slot:'head',name:'Princess Hat',price:70,tier:4,svg:`<polygon points="130,0 112,62 156,58" fill="#b78cff"/><path d="M130 0 Q170 30 176 90" stroke="#ffd6e8" stroke-width="4" fill="none" opacity=".9"/>`},
+  {id:'head_diamond',slot:'head',name:'Diamond Tiara',price:80,tier:5,svg:`<path d="M86 62 L96 40 L108 56 L120 30 L132 56 L144 40 L154 62 Z" fill="#eaf6ff" stroke="#9fd8ff" stroke-width="2"/><polygon points="${starPts(120,42,7,3)}" fill="#7fc8ff"/><circle cx="106" cy="52" r="3" fill="#b78cff"/><circle cx="134" cy="52" r="3" fill="#b78cff"/>`},
+  {id:'head_queen',slot:'head',name:'Queen Crown',price:140,tier:6,svg:`<path d="M84 64 L84 34 L102 50 L120 22 L138 50 L156 34 L156 64 Z" fill="#f4b63a" stroke="#d99a1e" stroke-width="2"/><rect x="84" y="58" width="72" height="8" fill="#8a2be2"/>`+dots('#e8334f',[[120,34],[96,46],[144,46]],4)+dots('#fff',[[100,62],[120,62],[140,62]],2.5)},
+  /* ---------- earrings ---------- */
+  {id:'ear_pearl',slot:'earrings',name:'Pearl Earrings',price:20,tier:1,svg:`<circle cx="74" cy="118" r="4.5" fill="#fff" stroke="#ddd" stroke-width="1"/><circle cx="166" cy="118" r="4.5" fill="#fff" stroke="#ddd" stroke-width="1"/>`},
+  {id:'ear_ruby',slot:'earrings',name:'Ruby Earrings',price:30,tier:2,svg:`<polygon points="74,111 80,118 74,126 68,118" fill="#e8334f"/><polygon points="166,111 172,118 166,126 160,118" fill="#e8334f"/>`},
+  {id:'ear_heart',slot:'earrings',name:'Heart Earrings',price:35,tier:3,svg:`<path d="${heartPath(74,116,6)}" fill="#ff5fa8"/><path d="${heartPath(166,116,6)}" fill="#ff5fa8"/>`},
+  {id:'ear_hoops',slot:'earrings',name:'Gold Hoops',price:40,tier:3,svg:`<circle cx="74" cy="120" r="7" fill="none" stroke="#f4b63a" stroke-width="3"/><circle cx="166" cy="120" r="7" fill="none" stroke="#f4b63a" stroke-width="3"/>`},
+  {id:'ear_star',slot:'earrings',name:'Star Earrings',price:40,tier:4,svg:`<polygon points="${starPts(74,119,7,3)}" fill="#ffd84d"/><polygon points="${starPts(166,119,7,3)}" fill="#ffd84d"/>`},
+  {id:'ear_drops',slot:'earrings',name:'Diamond Drops',price:70,tier:5,svg:`<line x1="74" y1="112" x2="74" y2="124" stroke="#dfe6f2" stroke-width="2"/><line x1="166" y1="112" x2="166" y2="124" stroke="#dfe6f2" stroke-width="2"/><polygon points="74,122 80,129 74,136 68,129" fill="#7fc8ff"/><polygon points="166,122 172,129 166,136 160,129" fill="#7fc8ff"/>`},
+  /* ---------- necklaces ---------- */
+  {id:'neck_heart',slot:'necklace',name:'Heart Necklace',price:25,tier:1,svg:`<path d="M102 150 Q120 172 138 150" stroke="#f4b63a" stroke-width="2" fill="none"/><path d="${heartPath(120,172,7)}" fill="#ff5fa8"/>`},
+  {id:'neck_pearls',slot:'necklace',name:'Pearl Necklace',price:35,tier:2,svg:[102,107,112,117,122,127,132,137].map((x,i)=>`<circle cx="${x+0.5}" cy="${150+Math.sin(i/7*Math.PI)*16}" r="3.5" fill="#fff" stroke="#ddd" stroke-width="1"/>`).join('')},
+  {id:'neck_star',slot:'necklace',name:'Star Necklace',price:40,tier:3,svg:`<path d="M102 150 Q120 172 138 150" stroke="#dfe6f2" stroke-width="2" fill="none"/><polygon points="${starPts(120,174,8,3.5)}" fill="#ffd84d"/>`},
+  {id:'neck_gem',slot:'necklace',name:'Gem Necklace',price:55,tier:4,svg:`<path d="M102 150 Q120 172 138 150" stroke="#dfe6f2" stroke-width="2.5" fill="none"/><polygon points="120,164 128,172 120,182 112,172" fill="#3fa9f5"/><polygon points="120,166 125,172 120,178 115,172" fill="#cfeeff"/>`},
+  {id:'neck_rainbow',slot:'necklace',name:'Rainbow Beads',price:65,tier:5,svg:[102,107,112,117,122,127,132,137].map((x,i)=>`<circle cx="${x+0.5}" cy="${150+Math.sin(i/7*Math.PI)*16}" r="4" fill="${['#ff6fb1','#ffd84d','#7ee8c6','#7fc8ff','#b78cff','#ff6fb1','#ffd84d','#7ee8c6'][i]}"/>`).join('')},
+  /* ---------- glasses ---------- */
+  {id:'glass_sun',slot:'glasses',name:'Sunglasses',price:20,tier:1,svg:glasses('#3b2a4a','round','#3b2a4a')},
+  {id:'glass_heart',slot:'glasses',name:'Heart Shades',price:30,tier:2,svg:glasses('#ff5fa8','heart','#ff8fc4')},
+  {id:'glass_cat',slot:'glasses',name:'Cat-Eye Shades',price:35,tier:3,svg:glasses('#9a6cff','cat','#b78cff')},
+  {id:'glass_star',slot:'glasses',name:'Star Shades',price:45,tier:3,svg:glasses('#f4b63a','star','#ffd84d')},
+  {id:'glass_round',slot:'glasses',name:'Rainbow Rounds',price:55,tier:4,svg:glasses('#3b2a4a','round','url(#rainbow)')},
+  {id:'glass_diamond',slot:'glasses',name:'Diamond Shades',price:75,tier:5,svg:glasses('#9fd8ff','cat','#cfeeff')},
+  /* ---------- bags ---------- */
+  {id:'bag_pink',slot:'bag',name:'Pink Purse',price:20,tier:1,svg:bag(`<rect x="50" y="238" width="26" height="20" rx="7" fill="#ff8fc4"/><circle cx="63" cy="248" r="3" fill="#fff"/>`,'#ff5fa8')},
+  {id:'bag_heart',slot:'bag',name:'Heart Bag',price:30,tier:2,svg:bag(`<path d="${heartPath(62,246,14)}" fill="#ff5fa8"/>`,'#ff5fa8')},
+  {id:'bag_basket',slot:'bag',name:'Flower Basket',price:35,tier:2,svg:bag(`<path d="M48 240 L78 240 L74 260 L52 260 Z" fill="#c47a3a"/>`+dots('#ff8fc4',[[55,238],[63,235],[71,238]],4)+dots('#ffe27a',[[59,236],[67,236]],2.5),'#c47a3a')},
+  {id:'bag_star',slot:'bag',name:'Star Bag',price:40,tier:3,svg:bag(`<polygon points="${starPts(62,248,16,7)}" fill="#ffd84d"/>`,'#f4b63a')},
+  {id:'bag_unicorn',slot:'bag',name:'Unicorn Bag',price:55,tier:4,svg:bag(`<rect x="48" y="238" width="30" height="22" rx="9" fill="#e3d4ff"/><polygon points="63,228 59,240 67,240" fill="#ffd84d"/><circle cx="58" cy="248" r="2" fill="#3b2a4a"/><circle cx="68" cy="248" r="2" fill="#3b2a4a"/>`,'#b78cff')},
+  {id:'bag_rainbow',slot:'bag',name:'Rainbow Bag',price:60,tier:4,svg:bag(`<rect x="48" y="236" width="30" height="24" rx="8" fill="url(#rainbow)"/><rect x="52" y="240" width="22" height="4" rx="2" fill="#fff" opacity=".7"/>`,'#ff5fa8')},
+  {id:'bag_gold',slot:'bag',name:'Golden Clutch',price:80,tier:5,svg:bag(`<rect x="48" y="240" width="30" height="18" rx="6" fill="#f4b63a"/><circle cx="63" cy="249" r="3" fill="#e8334f"/>`,'#f4b63a')},
+  /* ---------- wands ---------- */
+  {id:'wand_star',slot:'wand',name:'Star Wand',price:30,tier:1,svg:`<line x1="172" y1="212" x2="198" y2="150" stroke="#ff8fc4" stroke-width="5" stroke-linecap="round"/><polygon points="${starPts(200,144,13,6)}" fill="#ffd84d"/>`},
+  {id:'wand_heart',slot:'wand',name:'Heart Wand',price:40,tier:2,svg:`<line x1="172" y1="212" x2="198" y2="150" stroke="#b78cff" stroke-width="5" stroke-linecap="round"/><path d="${heartPath(200,147,12)}" fill="#ff5fa8"/>`},
+  {id:'wand_flower',slot:'wand',name:'Flower Wand',price:45,tier:3,svg:`<line x1="172" y1="212" x2="198" y2="150" stroke="#7ee8c6" stroke-width="5" stroke-linecap="round"/>`+[0,72,144,216,288].map(a=>`<circle cx="${(200+9*Math.cos(a*Math.PI/180)).toFixed(1)}" cy="${(144+9*Math.sin(a*Math.PI/180)).toFixed(1)}" r="6" fill="#ff8fc4"/>`).join('')+`<circle cx="200" cy="144" r="5" fill="#ffe27a"/>`},
+  {id:'wand_moon',slot:'wand',name:'Moon Wand',price:60,tier:4,svg:`<line x1="172" y1="212" x2="198" y2="150" stroke="#3b2a7a" stroke-width="5" stroke-linecap="round"/><path d="M206 132 A14 14 0 1 0 206 158 A10 10 0 1 1 206 132 Z" fill="#ffe27a"/>`},
+  {id:'wand_rainbow',slot:'wand',name:'Rainbow Wand',price:70,tier:5,svg:`<line x1="172" y1="212" x2="198" y2="150" stroke="url(#rainbow)" stroke-width="6" stroke-linecap="round"/><polygon points="${starPts(200,144,14,6)}" fill="#fff"/><polygon points="${starPts(200,144,8,3)}" fill="#ffd84d"/><polygon points="${starPts(186,166,5,2)}" fill="#fff"/><polygon points="${starPts(214,160,5,2)}" fill="#fff"/>`},
+  /* ---------- pets ---------- */
+  {id:'pet_hamster',slot:'pet',name:'Hamster',price:50,tier:2,img:PET('pet_hamster')},
+  {id:'pet_bird',slot:'pet',name:'Birdie',price:45,tier:2,img:PET('pet_bird')},
+  {id:'pet_cat',slot:'pet',name:'Kitty',price:60,tier:3,img:PET('pet_cat')},
+  {id:'pet_dog',slot:'pet',name:'Puppy',price:60,tier:3,img:PET('pet_dog')},
+  {id:'pet_turtle',slot:'pet',name:'Turtle',price:55,tier:3,img:PET('pet_turtle')},
+  {id:'pet_bunny',slot:'pet',name:'Bunny',price:70,tier:4,img:PET('pet_bunny')},
+  {id:'pet_lamb',slot:'pet',name:'Lamb',price:75,tier:4,img:PET('pet_lamb')},
+  {id:'pet_butterfly',slot:'pet',name:'Butterfly',price:80,tier:4,img:PET('pet_butterfly')},
+  {id:'pet_dolphin',slot:'pet',name:'Dolphin',price:110,tier:5,img:PET('pet_dolphin')},
+  {id:'pet_unicorn',slot:'pet',name:'Unicorn',price:120,tier:5,img:PET('pet_unicorn')},
+  /* ---------- rides (big rewards) ---------- */
+  {id:'ride_pony',slot:'ride',name:'Pony',price:150,tier:4,img:PET('ride_pony')},
+  {id:'ride_horse',slot:'ride',name:'Royal Horse',price:220,tier:5,img:PET('ride_horse')},
+  {id:'ride_carriage',slot:'ride',name:'Pumpkin Carriage',price:300,tier:6,svg:`<g transform="translate(150 196) scale(.95)"><ellipse cx="46" cy="60" rx="44" ry="40" fill="#ff9f43"/><path d="M14 30 Q46 10 78 30" stroke="#f4b63a" stroke-width="5" fill="none"/><path d="M30 20 Q46 8 62 20" stroke="#f4b63a" stroke-width="4" fill="none"/><rect x="28" y="42" width="36" height="30" rx="12" fill="#ffe27a"/><rect x="34" y="48" width="24" height="18" rx="8" fill="#cfeeff"/><circle cx="18" cy="98" r="12" fill="#f4b63a"/><circle cx="74" cy="98" r="12" fill="#f4b63a"/><circle cx="18" cy="98" r="4" fill="#fff"/><circle cx="74" cy="98" r="4" fill="#fff"/><path d="M46 20 L46 8 M40 10 Q46 2 52 10" stroke="#2e8b57" stroke-width="4" fill="none"/></g>`},
+  /* ---------- places (backdrops, big rewards) ---------- */
+  {id:'place_garden',slot:'place',name:'Flower Garden',price:120,tier:4,bg:`<ellipse cx="120" cy="330" rx="200" ry="70" fill="#9ef0d9"/>`+[[20,262],[46,284],[208,262],[228,286],[196,290]].map(([x,y])=>`<circle cx="${x}" cy="${y}" r="7" fill="#ff8fc4"/><circle cx="${x}" cy="${y}" r="3" fill="#ffe27a"/>`).join('')},
+  {id:'place_beach',slot:'place',name:'Sunny Beach',price:150,tier:4,bg:`<rect x="0" y="0" width="240" height="320" fill="#bfe3ff"/><circle cx="200" cy="40" r="22" fill="#ffd84d"/><path d="M0 230 Q60 215 120 230 T240 230 L240 320 L0 320 Z" fill="#7fc8ff"/><ellipse cx="120" cy="330" rx="200" ry="60" fill="#ffe8b8"/>`},
+  {id:'place_rainbow',slot:'place',name:'Rainbow Sky',price:200,tier:5,bg:`<rect x="0" y="0" width="240" height="320" fill="#dff3ff"/>`+['#ff6fb1','#ffd84d','#7ee8c6','#7fc8ff','#b78cff'].map((c,i)=>`<path d="M-20 240 A140 140 0 0 1 260 240" stroke="${c}" stroke-width="12" fill="none" transform="translate(0 ${-i*12})" opacity=".85"/>`).join('')+`<ellipse cx="40" cy="60" rx="26" ry="14" fill="#fff"/><ellipse cx="200" cy="90" rx="30" ry="15" fill="#fff"/>`},
+  {id:'place_night',slot:'place',name:'Starry Night',price:220,tier:5,bg:`<rect x="0" y="0" width="240" height="320" fill="#3b2a7a"/>`+[[20,30],[60,70],[110,20],[170,50],[220,24],[200,120],[30,150],[230,180],[90,120]].map(([x,y])=>`<polygon points="${starPts(x,y,5,2)}" fill="#ffe27a"/>`).join('')+`<path d="M206 70 A22 22 0 1 0 206 114 A16 16 0 1 1 206 70 Z" fill="#fff1b8"/>`},
+  {id:'place_castle',slot:'place',name:'Royal Castle',price:400,tier:6,bg:`<rect x="0" y="0" width="240" height="320" fill="#ffd9ec"/><image href="img/place_castle.png" x="110" y="20" width="150" height="150" opacity=".95"/><ellipse cx="120" cy="330" rx="200" ry="70" fill="#9ef0d9"/>`},
+];
+const SLOTS=[['dress','👗','Dresses'],['top','👚','Tops'],['skirt','🩳','Skirts'],['shoes','👠','Shoes'],['head','👑','Head'],['glasses','🕶️','Glasses'],['bag','👜','Bags'],['earrings','💎','Earrings'],['necklace','📿','Necklaces'],['wand','🪄','Wands'],['hair','💇‍♀️','Hair'],['pet','🐱','Pets'],['ride','🐴','Rides'],['place','🏰','Places']];
+const ITEM={}; ITEMS.forEach(i=>ITEM[i.id]=i);
+/* shop tiers: simple things first, fancier things as she finishes worlds */
+const TIERS=[null,{req:[],label:''},{req:['castle'],label:'Finish 🏰 level 1'},{req:['meadow'],label:'Finish 🦄 level 1'},{req:['icecream'],label:'Finish 🍦 level 1'},{req:['families','sounds'],label:'Finish 🌈 + 🧁 level 1'},{req:['forest','lagoon'],label:'Finish 🍭 + 🧜‍♀️ level 1'}];
+function tierOpen(t){ const T=TIERS[t||1]; return state.unlockedAll || T.req.every(id=>wstate(id).lvl>=1); }
+function itemOpen(it){ return it.price===0 || tierOpen(it.tier||1); }
+function shopState(){ return state.shop || (state.shop={owned:['hair_brown','dress_simple'],equipped:{hair:'hair_brown',dress:'dress_simple'},spent:0}); }
+function wallet(){ return totalStars()-shopState().spent; }
+function princessSVG(eq,cls=''){
+  const hair=(ITEM[eq.hair]||ITEM.hair_brown).color;
+  const layer=slot=>{ const it=ITEM[eq[slot]]; return it&&it.svg?it.svg:''; };
+  const img=(slot,x,y,w)=>{ const it=ITEM[eq[slot]]; return it&&it.img?`<image href="${it.img}" x="${x}" y="${y}" width="${w}" height="${w}"/>`:''; };
+  const place=ITEM[eq.place]; const bg=place&&place.bg?place.bg:'';
+  /* outfit: a full dress, or a top + skirt mix (plain pieces fill in whatever is missing) */
+  let outfit;
+  if(eq.top||eq.skirt){ outfit=(ITEM[eq.top]?ITEM[eq.top].svg:topSVG('#fff','#ffd6e8','tee'))+(ITEM[eq.skirt]?ITEM[eq.skirt].svg:skirtSVG('#ffd6e8','#ffb3d1','aline')); }
+  else outfit=(ITEM[eq.dress]||ITEM.dress_simple).svg;
+  return `<svg class="princess ${cls}" viewBox="0 0 240 320" xmlns="http://www.w3.org/2000/svg">
+  <defs><linearGradient id="rainbow" gradientUnits="userSpaceOnUse" x1="0" y1="140" x2="0" y2="292"><stop offset="0" stop-color="#ff6fb1"/><stop offset=".25" stop-color="#ffd84d"/><stop offset=".5" stop-color="#7ee8c6"/><stop offset=".75" stop-color="#7fc8ff"/><stop offset="1" stop-color="#b78cff"/></linearGradient><linearGradient id="rainbowHair" gradientUnits="userSpaceOnUse" x1="0" y1="44" x2="0" y2="206"><stop offset="0" stop-color="#ff6fb1"/><stop offset=".3" stop-color="#ffd84d"/><stop offset=".55" stop-color="#7ee8c6"/><stop offset=".8" stop-color="#7fc8ff"/><stop offset="1" stop-color="#b78cff"/></linearGradient><clipPath id="frame"><rect x="0" y="0" width="240" height="320" rx="24"/></clipPath></defs>
+  <g clip-path="url(#frame)">${bg}</g>
+  ${layer('ride')}${img('ride',150,196,96)}
+  <ellipse cx="120" cy="300" rx="90" ry="10" fill="rgba(120,40,100,.12)"/>
+  <path d="M76 84 Q66 170 88 206 L152 206 Q174 170 164 84 Z" fill="${hair}"/>
+  <rect x="111" y="128" width="18" height="22" rx="6" fill="${SKIN_D}"/>
+  <rect x="100" y="200" width="17" height="94" rx="8" fill="${SKIN}"/><rect x="123" y="200" width="17" height="94" rx="8" fill="${SKIN}"/>
+  <path d="M92 156 Q70 186 72 214" stroke="${SKIN}" stroke-width="13" fill="none" stroke-linecap="round"/>
+  <path d="M148 156 Q170 186 168 214" stroke="${SKIN}" stroke-width="13" fill="none" stroke-linecap="round"/>
+  ${outfit}
+  <circle cx="72" cy="216" r="8" fill="${SKIN}"/><circle cx="168" cy="216" r="8" fill="${SKIN}"/>
+  ${layer('shoes')}${layer('necklace')}${layer('wand')}${layer('bag')}
+  <circle cx="73" cy="104" r="9" fill="${SKIN}"/><circle cx="167" cy="104" r="9" fill="${SKIN}"/>
+  <circle cx="120" cy="92" r="47" fill="${SKIN}"/>
+  <ellipse cx="103" cy="96" rx="7" ry="9.5" fill="#3b2a4a"/><ellipse cx="137" cy="96" rx="7" ry="9.5" fill="#3b2a4a"/>
+  <circle cx="106" cy="92" r="2.8" fill="#fff"/><circle cx="140" cy="92" r="2.8" fill="#fff"/>
+  <path d="M94 84 Q103 78 112 84" stroke="#3b2a4a" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M128 84 Q137 78 146 84" stroke="#3b2a4a" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  <circle cx="92" cy="112" r="7" fill="#ffb3c6" opacity=".7"/><circle cx="148" cy="112" r="7" fill="#ffb3c6" opacity=".7"/>
+  <path d="M108 118 Q120 130 132 118" stroke="#c2456f" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <path d="M73 92 Q76 44 120 44 Q164 44 167 92 Q154 64 128 70 Q110 66 96 74 Q82 80 73 92 Z" fill="${hair}"/>
+  ${layer('glasses')}${layer('earrings')}${layer('head')}
+  ${img('pet',4,222,76)}
+  </svg>`;
+}
+let shopTab='dress';
+function renderShop(){
+  const sh=shopState();
+  $('shopPrincess').innerHTML=princessSVG(sh.equipped,'big');
+  $('shopWallet').textContent=wallet();
+  $('shopTabs').innerHTML=SLOTS.map(([id,em,name])=>{ const n=ITEMS.filter(i=>i.slot===id&&itemOpen(i)&&!sh.owned.includes(i.id)&&wallet()>=i.price).length; return `<button class="tab ${shopTab===id?'on':''}" data-slot="${id}">${em}<small>${name}</small>${n?`<b class="badge">${n}</b>`:''}</button>`; }).join('');
+  $('shopTabs').querySelectorAll('.tab').forEach(b=>b.onclick=()=>{ shopTab=b.dataset.slot; sfx.tap(); renderShop(); $('shopItems').scrollTop=0; b.scrollIntoView({inline:'center',block:'nearest',behavior:'smooth'}); });
+  const grid=$('shopItems'); grid.innerHTML='';
+  ITEMS.filter(i=>i.slot===shopTab).sort((a,b)=>(itemOpen(b)-itemOpen(a))||(a.tier||1)-(b.tier||1)||a.price-b.price).forEach(it=>{
+    const owned=sh.owned.includes(it.id), wearing=sh.equipped[it.slot]===it.id, can=wallet()>=it.price, open=itemOpen(it);
+    const card=document.createElement('button'); card.className='item'+(wearing?' wearing':owned?' owned':!open?' locked':can?' can':' cant');
+    const preview=Object.assign({},sh.equipped,{[it.slot]:it.id});
+    if(it.slot==='dress'){ delete preview.top; delete preview.skirt; } if(it.slot==='top'||it.slot==='skirt') delete preview.dress;
+    card.innerHTML=`<div class="pv">${princessSVG(preview)}</div><div class="iname">${it.name}</div><div class="iprice">${wearing?'✅ Wearing':owned?'👗 Wear':!open?'🔒 '+it.price:`⭐ ${it.price}`}</div>${!open?`<div class="ireq">${TIERS[it.tier].label}</div>`:''}`;
+    card.onclick=()=>tapItem(it,card);
+    grid.appendChild(card);
+  });
+}
+function equip(sh,it){
+  sh.equipped[it.slot]=it.id;
+  if(it.slot==='dress'){ delete sh.equipped.top; delete sh.equipped.skirt; }
+  if(it.slot==='top'||it.slot==='skirt') delete sh.equipped.dress;
+}
+function tapItem(it,card){
+  const sh=shopState(); const owned=sh.owned.includes(it.id);
+  if(owned){
+    const removable=!['hair','dress'].includes(it.slot);
+    if(sh.equipped[it.slot]===it.id && removable){ delete sh.equipped[it.slot]; if(!sh.equipped.top&&!sh.equipped.skirt&&!sh.equipped.dress) sh.equipped.dress='dress_simple'; }
+    else equip(sh,it);
+    sfx.tap(); save(); renderShop(); return;
+  }
+  if(!itemOpen(it)){ sfx.wrong(); card.classList.add('wrong'); setTimeout(()=>card.classList.remove('wrong'),400); sayPhrase('p_locked','Not yet! Finish more words to unlock it!'); return; }
+  if(wallet()<it.price){ sfx.wrong(); card.classList.add('wrong'); setTimeout(()=>card.classList.remove('wrong'),400); sayPhrase('p_need','You need more stars. Keep spelling!'); return; }
+  sh.spent+=it.price; sh.owned.push(it.id); equip(sh,it); save();
+  sfx.sticker(); confetti(50); sayPhrase('p_buy','Beautiful! She loves it!'); renderShop();
+}
+function openShop(tab){ if(tab) shopTab=tab; renderShop(); show('shop'); sayPhrase('p_shop','Welcome to the princess shop!'); }
+
+/* ================= PARENT PANEL ================= */
+function fillVoiceSelect(){ const sel=$('voiceSelect'); if(!sel) return; sel.innerHTML='<option value="">אוטומטי</option>'+voices.map(v=>`<option value="${v.name}" ${state.settings.voice===v.name?'selected':''}>${v.name} (${v.lang})</option>`).join(''); }
+function renderParent(){
+  const t=$('statsTable'); t.innerHTML='<tr><th>עולם</th><th>רמה</th><th>מילים ברמה</th><th>⭐ שנצברו</th></tr>';
+  WORLDS.forEach(w=>{ const ws=wstate(w.id);
+    t.innerHTML+=`<tr><td>${w.emoji} ${w.name}</td><td><select data-world="${w.id}" class="lvlsel">${[0,1,2,3].map(l=>`<option value="${l}" ${ws.lvl===l?'selected':''}>${l+1}</option>`).join('')}</select></td><td>${doneCount(w)}/${needCount(w)}</td><td>${ws.stars}</td></tr>`; });
+  t.querySelectorAll('.lvlsel').forEach(sel=>sel.onchange=()=>{ wstate(sel.dataset.world).lvl=+sel.value; save(); renderParent(); });
+  const hard=[]; WORLDS.forEach(w=>worldWords(w).forEach(([x])=>{ const s=wstat(w,x); if(s.miss>0&&s.streak<2) hard.push(`${x} (${s.miss})`); }));
+  $('hardWords').innerHTML=hard.length?hard.map(h=>`<span class="chip">${h}</span>`).join(''):'<span class="note">עדיין אין. כל הכבוד!</span>';
+  $('upperSwitch').classList.toggle('on',state.settings.upper);
+  $('spellSwitch').classList.toggle('on',state.settings.spell);
+  $('ttsSwitch').classList.toggle('on',!!state.settings.useTTS);
+  $('customWorld').innerHTML=WORLDS.map(w=>`<option value="${w.id}">${w.emoji} ${w.name}</option>`).join('');
+  $('customList').innerHTML=state.custom.map((c,i)=>`<span class="chip">${c.emoji} ${c.word} <button data-i="${i}">✕</button></span>`).join('');
+  $('customList').querySelectorAll('button').forEach(b=>b.onclick=()=>{ state.custom.splice(+b.dataset.i,1); save(); renderParent(); });
+  $('shopNote').textContent=`כוכבים לבזבוז: ${wallet()} · פריטים בארון: ${shopState().owned.length} מתוך ${ITEMS.length} · הוצאו עד היום: ${shopState().spent} כוכבים. פריטים פתוחים לקנייה: ${ITEMS.filter(itemOpen).length}. החנות נפתחת בשלבים: פריטים פשוטים מההתחלה, ואחרי סיום רמה 1 בטירה, ביוניקורנים, בגלידה, במשפחות+צלילים וביער+לגונה נפתחים דברים מפוארים יותר, עד כרכרה וטירה.`;
+  fillVoiceSelect(); renderDiag();
+}
+
+/* ================= EVENTS ================= */
+$('picture').onclick=peek; $('hearBtn').onclick=peek;
+$('backBtn').onclick=()=>{ if(G) clearInterval(G.timer); G=null; speechSynthesis.cancel&&speechSynthesis.cancel(); renderHome(); show('home'); };
+$('againBtn').onclick=()=>{ if(G.w.challenge) startChallenge(); else startRound(G.w); };
+$('homeBtn').onclick=()=>{ renderHome(); show('home'); };
+$('shopBtn').onclick=()=>openShop();
+$('shopFromReward').onclick=()=>openShop();
+$('shopBack').onclick=()=>{ renderHome(); show('home'); };
+function startChallenge(){
+  const pool=[]; WORLDS.forEach((w,i)=>{ if(!w.sentence && !w.listen && isUnlocked(w,i)) worldWords(w).forEach(x=>{ if(!pool.some(y=>y[0]===x[0])) pool.push(x); }); });
+  const cw={id:'challenge', name:'Princess Challenge', emoji:'🏆', challenge:true, intro:'p_challenge', stickers:['🏆'], words:pool};
+  wstate('challenge').lvl=0; startRound(cw);
+}
+$('starsPill').onclick=()=>openShop();
+let pressTimer=null;
+const crown=$('crown');
+const startPress=()=>{ pressTimer=setTimeout(()=>{ renderParent(); show('parent'); },1200); };
+const endPress=()=>clearTimeout(pressTimer);
+crown.addEventListener('touchstart',startPress,{passive:true}); crown.addEventListener('touchend',endPress); crown.addEventListener('touchmove',endPress);
+crown.addEventListener('mousedown',startPress); crown.addEventListener('mouseup',endPress); crown.addEventListener('mouseleave',endPress);
+crown.addEventListener('contextmenu',e=>e.preventDefault());
+$('parentClose').onclick=()=>{ renderHome(); show('home'); };
+$('upperSwitch').onclick=()=>{ state.settings.upper=!state.settings.upper; save(); renderParent(); };
+$('spellSwitch').onclick=()=>{ state.settings.spell=!state.settings.spell; save(); renderParent(); };
+$('ttsSwitch').onclick=()=>{ state.settings.useTTS=!state.settings.useTTS; save(); renderParent(); };
+$('voiceSelect').onchange=e=>{ state.settings.voice=e.target.value; save(); };
+function renderDiag(){ const d=$('speechDiag'); if(!d) return; let v=0; try{ v=speechSynthesis.getVoices().length; }catch(e){}
+  const clips=`הקלטות: ${CLIPS.size} · נטענו: ${clipLog.loaded}`+(clipLog.errors.length?` · שגיאות: ${clipLog.errors.join(', ')}`:'')+' · ';
+  d.textContent=clips+(!speechLog.supported?'❌ הדפדפן הזה לא תומך בדיבור. נסי לפתוח את המשחק ב-Safari (אייפון) או ב-Chrome (אנדרואיד).':`מנוע דיבור: זמין · קולות במכשיר: ${v} · קולות באנגלית: ${voices.length} · הושמעו: ${speechLog.spoken}`+(speechLog.errors.length?` · שגיאות: ${speechLog.errors.join(', ')}`:'')); }
+$('testVoice').onclick=()=>{ if(useClips()) playClips(['p_hello','l_c','l_a','l_t','w_cat'],{gap:0.3}).catch(()=>speak('Hello princess! C. A. T. Cat!')); else speak('Hello princess! C. A. T. Cat!'); setTimeout(renderDiag,1500); };
+$('addCustom').onclick=()=>{ const word=$('customWord').value.trim().toLowerCase(), emoji=$('customEmoji').value.trim()||'⭐', world=$('customWorld').value;
+  if(!word) return; state.custom.push({world,word,emoji}); save(); $('customWord').value=''; $('customEmoji').value=''; renderParent(); };
+$('bonusStars').onclick=()=>{ wstate('bonus').stars+=30; save(); renderParent(); };
+$('unlockAll').onclick=()=>{ state.unlockedAll=true; save(); renderParent(); alert('כל העולמות פתוחים!'); };
+$('resetAll').onclick=()=>{ if(confirm('לאפס את כל ההתקדמות, הכוכבים והמדבקות?')){ const custom=state.custom, settings=state.settings; state=defaultState(); state.custom=custom; state.settings=settings; save(); renderParent(); } };
+
+renderHome();
+</script>
+</body>
+</html>
